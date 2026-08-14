@@ -8,7 +8,8 @@
     "start": "electron .",
     "build": "electron-builder --win",
     "build:setup": "npm run build:icon && node scripts/clean-dist.js && electron-builder --win nsis --x64",
-    "build:icon": "node scripts/build-icon.js"
+    "build:icon": "node scripts/build-icon.js",
+    "postinstall": "electron-builder install-app-deps"
   },
   "build": {
     "appId": "com.ziracai.rio.studio.designers",
@@ -46,6 +47,12 @@
       "runAfterFinish": true,
       "license": "build/license.txt",
       "displayLanguageSelector": false
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "nisalkrishan",
+      "repo": "Rio-Studio-Console",
+      "releaseType": "release"
     },
     "files": [
       "main.js",
