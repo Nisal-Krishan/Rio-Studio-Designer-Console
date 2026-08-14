@@ -2967,6 +2967,86 @@ function maybeShowWelcomePatchNotes() {
 initApp();
 initDesignerCapsLock();
 
+/* ─── Auto-Update UI Logic ─── */
+(function initAutoUpdater() {
+    if (!window.rioUpdater) return;
+
+    const updateModal = document.getElementById("updateModal");
+    const updateProgressBar = document.getElementById("updateProgressBar");
+    const updateStatusText = document.getElementById("updateStatusText");
+    const updateVersionText = document.getElementById("updateVersionText");
+    const updateModalFooter = document.getElementById("updateModalFooter");
+    const restartInstallBtn = document.getElementById("restartInstallBtn");
+    const updateLaterBtn = document.getElementById("updateLaterBtn");
+
+    function showUpdateModal() {
+        if (updateModal) updateModal.classList.remove("hidden");
+    }
+
+    function hideUpdateModal() {
+        if (updateModal) updateModal.classList.add("hidden");
+    }
+
+    // Listen for update checking
+    window.rioUpdater.onUpdateChecking(() => {
+        console.log("[Updater] Checking for updates...");
+        if (updateStatusText) updateStatusText.textContent = "Checking for updates...";
+        if (updateProgressBar) updateProgressBar.style.width = "0%";
+    });
+
+    // Listen for update available
+    window.rioUpdater.onUpdateAvailable((info) => {
+        console.log("[Updater] Update available:", info.version);
+        if (updateVersionText) updateVersionText.textContent = `Version ${info.version} is available`;
+        if (updateStatusText) updateStatusText.textContent = "Downloading update...";
+        if (updateProgressBar) updateProgressBar.style.width = "5%";
+        showUpdateModal();
+    });
+
+    // Listen for update not available
+    window.rioUpdater.onUpdateNotAvailable(() => {
+        console.log("[Updater] Already up to date");
+    });
+
+    // Listen for download progress
+    window.rioUpdater.onUpdateDownloadProgress((progress) => {
+        const percent = Math.round(progress.percent || 0);
+        console.log(`[Updater] Downloading: ${percent}%`);
+        if (updateProgressBar) updateProgressBar.style.width = `${percent}%`;
+        if (updateStatusText) updateStatusText.textContent = `Downloading update: ${percent}%`;
+    });
+
+    // Listen for update downloaded
+    window.rioUpdater.onUpdateDownloaded((info) => {
+        console.log("[Updater] Update downloaded:", info.version);
+        if (updateStatusText) updateStatusText.textContent = "Update ready to install";
+        if (updateProgressBar) updateProgressBar.style.width = "100%";
+        if (updateModalFooter) updateModalFooter.classList.remove("hidden");
+    });
+
+    // Listen for errors
+    window.rioUpdater.onUpdateError((error) => {
+        console.error("[Updater] Error:", error.message);
+        if (updateStatusText) updateStatusText.textContent = "Update check failed";
+        showToast("Update check failed: " + (error.message || "Unknown error"), true);
+    });
+
+    // Restart & Install button
+    if (restartInstallBtn) {
+        restartInstallBtn.addEventListener("click", () => {
+            console.log("[Updater] Restarting to install update...");
+            window.rioUpdater.restartAndInstall();
+        });
+    }
+
+    // Later button
+    if (updateLaterBtn) {
+        updateLaterBtn.addEventListener("click", () => {
+            hideUpdateModal();
+        });
+    }
+})();
+
 /* ─── Premium UI helpers (filters, analytics, print) ─── */
 function populateDesignerFilter(selectElement, bills) {
     if (!selectElement) return;

@@ -196,6 +196,34 @@
         </div>
     </div>
 
+    <!-- Update Available Modal -->
+    <div id="updateModal" class="modal-overlay hidden">
+        <div class="update-modal-card">
+            <div class="update-modal-header">
+                <div class="update-icon-wrap">
+                    <svg class="update-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="currentColor"/>
+                        <path d="M12 6C12.55 6 13 6.45 13 7V11.59L16.29 14.88C16.68 15.27 16.68 15.9 16.29 16.29C15.9 16.68 15.27 16.68 14.88 16.29L11.29 12.71C11.11 12.53 11 12.28 11 12V7C11 6.45 11.45 6 12 6Z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <div class="update-title-group">
+                    <h3>Update Available</h3>
+                    <p id="updateVersionText">A new version is ready to download</p>
+                </div>
+            </div>
+            <div class="update-modal-body">
+                <div class="update-progress-track">
+                    <div class="update-progress-fill" id="updateProgressBar"></div>
+                </div>
+                <p class="update-status-text" id="updateStatusText">Checking for updates...</p>
+            </div>
+            <div class="update-modal-footer hidden" id="updateModalFooter">
+                <button type="button" class="btn-ghost" id="updateLaterBtn">Later</button>
+                <button type="button" class="btn-primary btn-sm" id="restartInstallBtn">Restart & Update</button>
+            </div>
+        </div>
+    </div>
+
     <!-- LOGIN -->
     <section id="loginSection" class="app-section">
         <div class="login-page">

@@ -2,10 +2,20 @@ const { app, BrowserWindow, ipcMain, dialog, net, nativeImage } = require("elect
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
+const { autoUpdater } = require("electron-updater");
 
 const APP_ID = "com.ziracai.rio.studio.designers";
 const APP_ICON_PNG = path.join(__dirname, "build", "icon.png");
 const APP_ICON_ICO = path.join(__dirname, "build", "icon.ico");
+
+// ── Auto-Updater Configuration ──
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.allowDowngrade = false;
+autoUpdater.allowPrerelease = false;
+
+// Disable differential downloads for simpler setup
+autoUpdater.differentialPackage = false;
 
 function resolveAppIcon() {
     for (const iconPath of [APP_ICON_PNG, APP_ICON_ICO]) {
@@ -178,6 +188,70 @@ ipcMain.handle("save-pdf", async (event, htmlContent) => {
     return { success: false };
 });
 
+// ── Auto-Updater IPC Handlers ──
+ipcMain.handle("check-for-updates", async () => {
+    try {
+        const info = await autoUpdater.checkForUpdates();
+        return { success: true, hasUpdate: !!info?.updateInfo };
+    } catch (err) {
+        console.error("[AutoUpdater] Check failed:", err.message);
+        return { success: false, error: err.message };
+    }
+});
+
+ipcMain.handle("restart-and-install", () => {
+    autoUpdater.quitAndInstall(false, true);
+});
+
+// ── Auto-Updater Event Listeners ──
+autoUpdater.on("checking-for-update", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("update-checking");
+    }
+});
+
+autoUpdater.on("update-available", (info) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("update-available", {
+            version: info?.version || "latest"
+        });
+    }
+});
+
+autoUpdater.on("update-not-available", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("update-not-available");
+    }
+});
+
+autoUpdater.on("download-progress", (progressObj) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("update-download-progress", {
+            percent: progressObj.percent,
+            transferred: progressObj.transferred,
+            total: progressObj.total,
+            bytesPerSecond: progressObj.bytesPerSecond
+        });
+    }
+});
+
+autoUpdater.on("update-downloaded", (info) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("update-downloaded", {
+            version: info?.version || "latest"
+        });
+    }
+});
+
+autoUpdater.on("error", (err) => {
+    console.error("[AutoUpdater] Error:", err.message);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("update-error", {
+            message: err.message
+        });
+    }
+});
+
 app.whenReady().then(() => {
     if (process.platform === "win32") app.setAppUserModelId(APP_ID);
     else {
@@ -185,6 +259,13 @@ app.whenReady().then(() => {
         if (appIcon) app.setIcon(appIcon);
     }
     createWindow();
+    
+    // Start checking for updates after a short delay
+    setTimeout(() => {
+        autoUpdater.checkForUpdates().catch((err) => {
+            console.error("[AutoUpdater] Initial check failed:", err.message);
+        });
+    }, 1500);
 });
 
 app.on("window-all-closed", () => {
