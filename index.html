@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rio Studio Designers</title>
+    <link rel="icon" type="image/png" href="build/icon.png">
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- LOADING (shown first, hidden after init) -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-minimal">
+            <div class="loading-logo-wrap">
+                <img src="build/icon.png" alt="" class="loading-logo" width="56" height="56">
+            </div>
+            <span class="loading-app-name">Rio Studio</span>
+            <div class="loading-bar-track" aria-hidden="true">
+                <div class="loading-bar-fill"></div>
+            </div>
+            <p id="loadingStatus" class="loading-status-text">Loading</p>
+        </div>
+    </div>
+
+    <!-- User Edit Modal -->
+    <div id="userModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="userModalTitle">Change Password</h3>
+                <button type="button" class="modal-close" id="userModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="userModalError" class="login-error"></div>
+                <input type="hidden" id="editUserId">
+                <input type="hidden" id="editUserRole">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="editUsername" readonly class="input-readonly">
+                    <p class="field-note">Username cannot be changed — all bill data stays linked.</p>
+                </div>
+                <div class="form-group">
+                    <label for="editPassword">New Password *</label>
+                    <input type="password" id="editPassword" placeholder="Min 4 characters" required minlength="4">
+                </div>
+                <div class="form-group">
+                    <label for="editPasswordConfirm">Confirm Password</label>
+                    <input type="password" id="editPasswordConfirm" placeholder="Confirm new password">
+                </div>
+                <div class="form-group">
+                    <label for="adminConfirmPassword">Your Admin Password *</label>
+                    <input type="password" id="adminConfirmPassword" placeholder="Required to save changes" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost" id="userModalCancel">Cancel</button>
+                <button type="button" class="btn-primary btn-sm" id="userModalSave">Update Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dev Password Modal -->
+    <div id="devPasswordModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Change User Password</h3>
+                <button type="button" class="modal-close" id="devPasswordModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="devPasswordModalError" class="login-error"></div>
+                <input type="hidden" id="devEditUserId">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="devEditUsername" readonly class="input-readonly">
+                </div>
+                <div class="form-group">
+                    <label for="devEditPassword">New Password *</label>
+                    <input type="password" id="devEditPassword" placeholder="Min 4 characters" minlength="4">
+                </div>
+                <div class="form-group">
+                    <label for="devEditPasswordConfirm">Confirm Password *</label>
+                    <input type="password" id="devEditPasswordConfirm" placeholder="Re-enter new password">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost" id="devPasswordModalCancel">Cancel</button>
+                <button type="button" class="btn-primary btn-sm" id="devPasswordModalSave">Update Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div id="deleteModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Remove Designer</h3>
+                <button type="button" class="modal-close" id="deleteModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="deleteModalError" class="login-error"></div>
+                <p>Remove designer <strong id="deleteUserName"></strong> and <strong>all their bills</strong>? This cannot be undone.</p>
+                <input type="hidden" id="deleteUserId">
+                <div class="form-group" style="margin-top:14px;">
+                    <label for="deleteAdminPassword">Your Admin Password *</label>
+                    <input type="password" id="deleteAdminPassword" placeholder="Required to delete" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost" id="deleteModalCancel">Cancel</button>
+                <button type="button" class="btn-danger-solid btn-sm" id="deleteModalConfirm">Delete Designer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bill Edit Modal -->
+    <div id="billEditModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Edit Bill</h3>
+                <button type="button" class="modal-close" id="billEditClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="billEditError" class="login-error"></div>
+                <input type="hidden" id="editBillId">
+                <input type="hidden" id="editBillPending">
+                <input type="hidden" id="editBillLocalId">
+                <div class="form-group">
+                    <label for="editBillDate">Date</label>
+                    <input type="date" id="editBillDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="editBillNo">Bill No</label>
+                    <input type="text" id="editBillNo" class="designer-caps-input" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="editBillDescription">Description</label>
+                    <input type="text" id="editBillDescription" class="designer-caps-input" placeholder="Work / project description" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="editBillPrice">Price (Rs.)</label>
+                    <input type="number" id="editBillPrice" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="editBillDesignCharge">Design Charge (Rs.) <span class="label-optional">Optional</span></label>
+                    <input type="number" id="editBillDesignCharge" step="0.01" min="0" placeholder="0.00">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost" id="billEditCancel">Cancel</button>
+                <button type="button" class="btn-primary btn-sm" id="billEditSave">Save Bill</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bill Delete Modal -->
+    <div id="billDeleteModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Delete Bill</h3>
+                <button type="button" class="modal-close" id="billDeleteClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="billDeleteError" class="login-error"></div>
+                <p>Delete bill <strong id="deleteBillNo"></strong>? This cannot be undone.</p>
+                <input type="hidden" id="deleteBillId">
+                <input type="hidden" id="deleteBillPending">
+                <input type="hidden" id="deleteBillLocalId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost" id="billDeleteCancel">Cancel</button>
+                <button type="button" class="btn-danger-solid btn-sm" id="billDeleteConfirm">Delete Bill</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full View Table Overlay -->
+    <div id="fullViewModal" class="fullview-overlay hidden">
+        <div class="fullview-panel">
+            <div class="fullview-header">
+                <h2 id="fullViewTitle">Table View</h2>
+                <button type="button" class="modal-close" id="fullViewClose">&times;</button>
+            </div>
+            <div class="fullview-body">
+                <div class="table-scroll-area">
+                    <table id="fullViewTable" class="fullview-table fit-table"></table>
+                </div>
+                <div class="table-footer-bar fullview-footer" id="fullViewFooter">
+                    <span class="footer-label" id="fullViewFooterLabel">Total</span>
+                    <span class="footer-total" id="fullViewFooterTotal">Rs. 0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN -->
+    <section id="loginSection" class="app-section">
+        <div class="login-page">
+            <aside class="login-brand">
+                <div class="login-brand-glow"></div>
+                <div class="login-logo-wrap">
+                    <img src="build/icon.png" alt="Rio Studio" class="login-logo-img" width="80" height="80">
+                </div>
+                <h1>rio<span class="accent">studio</span></h1>
+                <span class="login-brand-badge">DESIGNERS</span>
+                <div class="login-brand-credits">
+                    <p class="login-company-name">Rio Studio Private Limited</p>
+                    <p class="login-company-desc">Professional billing &amp; design management for studio teams.</p>
+                    <div class="login-credit-divider"></div>
+                    <p class="login-credit-line">Developed by <strong>Nisal Krishan</strong></p>
+                    <p class="login-credit-line">Zirac AI Solution</p>
+                    <p class="login-copyright">© 2026 All Rights Reserved</p>
+                </div>
+            </aside>
+            <div class="login-wrapper">
+                <div class="login-card">
+                    <div class="login-card-head">
+                        <h2>Welcome back</h2>
+                        <p>Sign in to your dashboard</p>
+                    </div>
+                    <div id="loginError" class="login-error"></div>
+                    <div id="connectionStatus" class="login-connection checking">Connecting…</div>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="loginUsername">Username</label>
+                            <input type="text" id="loginUsername" placeholder="Enter username" autocomplete="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" required>
+                        </div>
+                        <button type="submit" class="btn-primary" id="loginBtn">Sign In</button>
+                    </form>
+                    <p class="login-hint">Offline login works if you signed in online before.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section id="adminSection" class="app-section">
+        <nav class="navbar">
+            <div class="logo">rio<span class="accent">studio</span><span class="badge">ADMIN</span></div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-admin-tab="adminBillsPanel">All Bills</button>
+                <button class="nav-tab" data-admin-tab="adminReportsPanel">Designer Reports</button>
+                <button class="nav-tab" data-admin-tab="adminUsersPanel">User Management</button>
+            </div>
+            <div class="nav-right">
+                <div id="adminNetworkBadge" class="network-badge offline" title="Offline" aria-label="Offline">
+                    <div class="signal-bars" data-level="0"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+                </div>
+                <button type="button" class="btn-sync" id="adminSyncBtn" title="Update all data">
+                    <span class="sync-icon">↻</span> Update <span id="adminPendingCount" class="pending-badge hidden">0</span>
+                </button>
+                <div class="user-chip">
+                    <div class="user-avatar" id="adminAvatar">A</div>
+                    <div class="user-info">
+                        <div class="user-name" id="adminDisplayName">Admin</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+                <button class="btn-logout" id="adminLogoutBtn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="admin-panel-content">
+            <div id="adminBillsPanel" class="admin-tab-panel active">
+                <div class="revenue-banner">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Revenue</div>
+                        <div class="stat-value" id="adminTotalRevenue">Rs. 0.00</div>
+                        <div class="stat-sub" id="adminBillCount">0 bills recorded</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Active Designers</div>
+                        <div class="stat-value" id="adminDesignerCount" style="color:var(--green);">0</div>
+                        <div class="stat-sub">Registered in system</div>
+                    </div>
+                </div>
+                <div class="table-container data-table-panel">
+                    <div class="table-header table-header-ledger">
+                        <h2>Master Bill Ledger</h2>
+                        <div class="table-header-filters">
+                            <div class="filter-quick-btns">
+                                <button type="button" class="filter-quick-btn active" data-ledger-filter="today" id="adminLedgerTodayBtn">Today</button>
+                                <button type="button" class="filter-quick-btn" data-ledger-filter="month" id="adminLedgerMonthBtn">This Month</button>
+                                <button type="button" class="filter-quick-btn" data-ledger-filter="all" id="adminLedgerAllBtn">All</button>
+                            </div>
+                            <div class="filter-bar-group">
+                                <label for="adminLedgerFilterType">Period</label>
+                                <select id="adminLedgerFilterType">
+                                    <option value="today" selected>Today</option>
+                                    <option value="month">Month</option>
+                                    <option value="year">Year</option>
+                                    <option value="date">Date</option>
+                                    <option value="range">Range</option>
+                                    <option value="all">All</option>
+                                </select>
+                            </div>
+                            <div class="filter-bar-group hidden" id="adminLedgerMonthRow">
+                                <input type="month" id="adminLedgerMonth" title="Month">
+                            </div>
+                            <div class="filter-bar-group hidden" id="adminLedgerYearRow">
+                                <input type="number" id="adminLedgerYear" min="2020" max="2099" step="1" placeholder="Year">
+                            </div>
+                            <div class="filter-bar-group hidden" id="adminLedgerDateRow">
+                                <input type="date" id="adminLedgerDate" title="Date">
+                            </div>
+                            <div class="filter-bar-group filter-range hidden" id="adminLedgerRangeRow">
+                                <input type="date" id="adminLedgerFrom" title="From">
+                                <span class="filter-sep">–</span>
+                                <input type="date" id="adminLedgerTo" title="To">
+                            </div>
+                            <span class="view-only-badge">View Only</span>
+                        </div>
+                    </div>
+                    <div class="table-scroll-area">
+                        <table class="fit-table admin-ledger-table">
+                            <thead><tr><th>Date</th><th>Bill No</th><th>Designer</th><th>Description</th><th>Price</th><th>Design</th><th class="col-total">Total</th><th class="col-updated">Last Update</th><th class="col-status">Status</th></tr></thead>
+                            <tbody id="adminBillsBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer-bar">
+                        <span class="footer-label">Grand Total</span>
+                        <span class="footer-total" id="adminTableTotal">Rs. 0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="adminReportsPanel" class="admin-tab-panel">
+                <div class="export-panel">
+                    <div class="filter-bar" id="adminReportFilterBar">
+                        <div class="filter-bar-group">
+                            <label for="adminReportDesigner">Designer</label>
+                            <select id="adminReportDesigner">
+                                <option value="all">All</option>
+                            </select>
+                        </div>
+                        <div class="filter-bar-group">
+                            <label for="adminReportFilterType">Period</label>
+                            <select id="adminReportFilterType">
+                                <option value="month">Month</option>
+                                <option value="year">Year</option>
+                                <option value="today">Today</option>
+                                <option value="date">Date</option>
+                                <option value="range">Range</option>
+                                <option value="all">All</option>
+                            </select>
+                        </div>
+                        <div class="filter-bar-group hidden" id="adminReportMonthRow">
+                            <input type="month" id="adminReportMonth" title="Month">
+                        </div>
+                        <div class="filter-bar-group hidden" id="adminReportYearRow">
+                            <input type="number" id="adminReportYear" min="2020" max="2099" step="1" placeholder="Year">
+                        </div>
+                        <div class="filter-bar-group hidden" id="adminReportDateRow">
+                            <input type="date" id="adminReportDate" title="Date">
+                        </div>
+                        <div class="filter-bar-group filter-range hidden" id="adminReportRangeRow">
+                            <input type="date" id="adminReportFrom" title="From">
+                            <span class="filter-sep">–</span>
+                            <input type="date" id="adminReportTo" title="To">
+                        </div>
+                        <div class="filter-bar-actions">
+                            <button type="button" class="btn-export-pdf btn-compact" id="adminReportPdfBtn">PDF</button>
+                        </div>
+                    </div>
+                    <div class="table-container data-table-panel">
+                        <div class="table-header">
+                            <h2>Report — <span id="adminReportTitle">Select filters</span></h2>
+                            <button type="button" class="btn-fullview-icon" id="adminReportFullViewBtn" title="Full View" aria-label="Full View">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                            </button>
+                        </div>
+                        <div class="table-scroll-area">
+                            <table id="adminReportTable" class="fit-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Bill No</th>
+                                        <th>Designer</th>
+                                        <th>Description</th>
+                                        <th>Price</th>
+                                        <th>Design</th>
+                                        <th class="col-total">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminReportBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="table-footer-bar">
+                            <span class="footer-label">Report Total</span>
+                            <span class="footer-total" id="adminReportTableTotal">Rs. 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="adminUsersPanel" class="admin-tab-panel">
+                <div class="dashboard-body" style="flex:1;">
+                    <aside class="left-panel">
+                        <div class="panel-label">Add New Designer</div>
+                        <form id="addDesignerForm">
+                            <div class="form-group">
+                                <label for="newDesignerUsername">Username *</label>
+                                <input type="text" id="newDesignerUsername" placeholder="e.g. kasun" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newDesignerPassword">Password *</label>
+                                <input type="password" id="newDesignerPassword" placeholder="Min 4 characters" required minlength="4">
+                            </div>
+                            <div class="form-group">
+                                <label for="newDesignerPasswordConfirm">Confirm Password *</label>
+                                <input type="password" id="newDesignerPasswordConfirm" placeholder="Re-enter password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="addAdminPassword">Your Admin Password *</label>
+                                <input type="password" id="addAdminPassword" placeholder="Required to add user" required>
+                            </div>
+                            <button type="submit" class="btn-primary">Add Designer</button>
+                        </form>
+                    </aside>
+                    <main class="right-panel">
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h2>System Users</h2>
+                                <span class="live-dot">Manage Users</span>
+                            </div>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead><tr><th>Username</th><th>Role</th><th>Session</th><th>Last Seen</th><th>Actions</th></tr></thead>
+                                    <tbody id="adminUsersBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DESIGNER -->
+    <section id="designerSection" class="app-section">
+        <nav class="navbar">
+            <div class="logo">rio<span class="accent">studio</span><span class="badge">DESIGNERS</span></div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-designer-tab="designerBillsPanel">Add Bills</button>
+                <button class="nav-tab" data-designer-tab="designerExportPanel">Export &amp; Review</button>
+            </div>
+            <div class="nav-right">
+                <div id="designerNetworkBadge" class="network-badge offline" title="Offline" aria-label="Offline">
+                    <div class="signal-bars" data-level="0"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+                </div>
+                <button type="button" class="btn-sync" id="designerSyncBtn" title="Update all data">
+                    <span class="sync-icon">↻</span> Update <span id="designerPendingCount" class="pending-badge hidden">0</span>
+                </button>
+                <div class="user-chip">
+                    <div class="user-avatar" id="designerAvatar">D</div>
+                    <div class="user-info">
+                        <div class="user-name" id="designerDisplayName">Designer</div>
+                        <div class="user-role">Designer</div>
+                    </div>
+                </div>
+                <button class="btn-logout" id="designerLogoutBtn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="designer-panel-content">
+            <!-- ADD BILLS TAB -->
+            <div id="designerBillsPanel" class="designer-tab-panel active">
+                <div class="dashboard-body">
+                    <aside class="left-panel designer-form-panel">
+                        <div class="bill-entry-card">
+                            <div class="bill-entry-head">
+                                <div class="panel-label">New Bill Entry</div>
+                                <label class="caps-light-switch" for="designerCapsToggle" title="CAPS — uppercase text when on">
+                                    <input type="checkbox" id="designerCapsToggle" aria-label="CAPS uppercase">
+                                    <span class="caps-light-track">
+                                        <span class="caps-light-knob"></span>
+                                    </span>
+                                </label>
+                            </div>
+                            <form id="billForm" class="compact-form bill-form-stack">
+                                <div class="form-group">
+                                    <label for="billDate">Date</label>
+                                    <input type="date" id="billDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="billNo">Bill No</label>
+                                    <input type="text" id="billNo" class="designer-caps-input" placeholder="INV-001" required autocomplete="off">
+                                </div>
+                                <div class="form-group">
+                                    <label for="billDescription">Description</label>
+                                    <input type="text" id="billDescription" class="designer-caps-input" placeholder="Client / project details" required autocomplete="off">
+                                </div>
+                                <div class="form-group">
+                                    <label for="billPrice">Price (Rs.)</label>
+                                    <input type="number" id="billPrice" step="0.01" min="0" placeholder="0.00" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="billDesignCharge">Design (optional)</label>
+                                    <input type="number" id="billDesignCharge" step="0.01" min="0" placeholder="Leave blank if none">
+                                </div>
+                                <div class="bill-preview-total">
+                                    <span>Line Total</span>
+                                    <strong id="billLineTotalPreview">Rs. 0.00</strong>
+                                </div>
+                                <button type="submit" class="btn-primary" id="saveBillBtn">Save Bill</button>
+                            </form>
+                        </div>
+                    </aside>
+                    <main class="right-panel designer-bills-panel">
+                        <div class="table-container data-table-panel">
+                            <div class="table-header table-header-ledger designer-ledger-header">
+                                <div class="designer-ledger-head">
+                                    <h2>My Bills</h2>
+                                    <div class="my-total-compact">
+                                        <span class="my-total-label">My Total</span>
+                                        <span class="my-total-value" id="designerTotalRevenue">Rs. 0.00</span>
+                                        <span class="my-total-count" id="designerBillCount">0 bills</span>
+                                    </div>
+                                </div>
+                                <div class="table-header-filters">
+                                    <div class="filter-quick-btns">
+                                        <button type="button" class="filter-quick-btn active" data-designer-list-filter="today" id="designerListTodayBtn">Today</button>
+                                        <button type="button" class="filter-quick-btn" data-designer-list-filter="month" id="designerListMonthBtn">This Month</button>
+                                        <button type="button" class="filter-quick-btn" data-designer-list-filter="all" id="designerListAllBtn">All</button>
+                                    </div>
+                                    <div class="filter-bar-group">
+                                        <label for="listFilterType">Period</label>
+                                        <select id="listFilterType">
+                                            <option value="today" selected>Today</option>
+                                            <option value="month">Month</option>
+                                            <option value="year">Year</option>
+                                            <option value="date">Date</option>
+                                            <option value="range">Range</option>
+                                            <option value="all">All</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-bar-group hidden" id="listFilterMonthRow">
+                                        <input type="month" id="listFilterMonth" title="Month">
+                                    </div>
+                                    <div class="filter-bar-group hidden" id="listFilterYearRow">
+                                        <input type="number" id="listFilterYear" min="2020" max="2099" step="1" placeholder="Year">
+                                    </div>
+                                    <div class="filter-bar-group hidden" id="listFilterDateRow">
+                                        <input type="date" id="listFilterDate" title="Date">
+                                    </div>
+                                    <div class="filter-bar-group filter-range hidden" id="listFilterRangeWrap">
+                                        <input type="date" id="listFilterFrom" title="From">
+                                        <span class="filter-sep">–</span>
+                                        <input type="date" id="listFilterTo" title="To">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-fullview-icon" id="designerBillsFullViewBtn" title="Full View" aria-label="Full View">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                                </button>
+                            </div>
+                            <div class="table-scroll-area">
+                                <table id="designerBillsTable" class="designer-bills-table fit-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Bill No</th>
+                                            <th>Description</th>
+                                            <th>Price</th>
+                                            <th>Design</th>
+                                            <th class="col-total">Total</th>
+                                            <th class="col-status">Status</th>
+                                            <th class="col-actions">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="designerBillsBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="table-footer-bar">
+                                <span class="footer-label">My Total</span>
+                                <span class="footer-total" id="designerTableTotal">Rs. 0.00</span>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+
+            <!-- EXPORT & REVIEW TAB -->
+            <div id="designerExportPanel" class="designer-tab-panel">
+                <div class="export-panel">
+                    <div class="filter-bar">
+                        <div class="filter-bar-group">
+                            <label for="exportFilterType">Period</label>
+                            <select id="exportFilterType">
+                                <option value="today">Today</option>
+                                <option value="month">Month</option>
+                                <option value="date">Date</option>
+                                <option value="range">Range</option>
+                                <option value="all">All</option>
+                            </select>
+                        </div>
+                        <div class="filter-bar-group hidden" id="exportMonthRow">
+                            <input type="month" id="exportMonth" title="Month">
+                        </div>
+                        <div class="filter-bar-group hidden" id="exportDateRow">
+                            <input type="date" id="exportSingleDate" title="Date">
+                        </div>
+                        <div class="filter-bar-group filter-range hidden" id="exportRangeRow">
+                            <input type="date" id="exportDateFrom" title="From">
+                            <span class="filter-sep">–</span>
+                            <input type="date" id="exportDateTo" title="To">
+                        </div>
+                        <div class="filter-bar-actions">
+                            <button type="button" class="btn-export-pdf btn-compact" id="exportPdfBtn">PDF</button>
+                        </div>
+                    </div>
+                    <div class="table-container data-table-panel">
+                        <div class="table-header">
+                            <h2>Review — <span id="exportReviewTitle">Today</span></h2>
+                            <button type="button" class="btn-fullview-icon" id="exportFullViewBtn" title="Full View" aria-label="Full View">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                            </button>
+                        </div>
+                        <div class="table-scroll-area">
+                            <table id="exportReviewTable" class="fit-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Bill No</th>
+                                        <th>Description</th>
+                                        <th>Price</th>
+                                        <th>Design</th>
+                                        <th class="col-total">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="exportReviewBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="table-footer-bar">
+                            <span class="footer-label">Grand Total</span>
+                            <span class="footer-total" id="exportReviewTotal">Rs. 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DEVELOPER — Nisal_Krishan -->
+    <section id="developerSection" class="app-section">
+        <nav class="navbar dev-navbar">
+            <div class="logo">rio<span class="accent">studio</span><span class="badge dev-badge">DEV PANEL</span></div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-dev-tab="devBillsPanel">All Data / Bills</button>
+                <button class="nav-tab" data-dev-tab="devStoragePanel">Monitor Board</button>
+                <button class="nav-tab" data-dev-tab="devUsersPanel">All Users</button>
+            </div>
+            <div class="nav-right">
+                <div class="dev-name-tag">Nisal_Krishan</div>
+                <div id="devNetworkBadge" class="network-badge offline" title="Offline" aria-label="Offline">
+                    <div class="signal-bars" data-level="0"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+                </div>
+                <button type="button" class="btn-sync" id="devSyncBtn" title="Update all data"><span class="sync-icon">↻</span> Update <span id="devPendingCount" class="pending-badge hidden">0</span></button>
+                <button class="btn-logout" id="devLogoutBtn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="admin-panel-content dev-content">
+            <div id="devBillsPanel" class="admin-tab-panel active">
+                <div class="revenue-banner">
+                    <div class="stat-card dev-stat">
+                        <div class="stat-label">Total System Revenue</div>
+                        <div class="stat-value" id="devTotalRevenue">Rs. 0.00</div>
+                        <div class="stat-sub" id="devBillCount">0 bills</div>
+                    </div>
+                    <div class="stat-card dev-stat">
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-value" id="devUserCount" style="color:var(--green);">0</div>
+                        <div class="stat-sub">Full data control</div>
+                    </div>
+                </div>
+                <div class="table-container data-table-panel">
+                    <div class="table-header table-header-ledger">
+                        <h2>Complete Bill Database</h2>
+                        <div class="table-header-filters">
+                            <div class="filter-quick-btns">
+                                <button type="button" class="filter-quick-btn active" data-dev-ledger-filter="today" id="devLedgerTodayBtn">Today</button>
+                                <button type="button" class="filter-quick-btn" data-dev-ledger-filter="month" id="devLedgerMonthBtn">This Month</button>
+                                <button type="button" class="filter-quick-btn" data-dev-ledger-filter="all" id="devLedgerAllBtn">All</button>
+                            </div>
+                            <div class="filter-bar-group">
+                                <label for="devLedgerFilterType">Period</label>
+                                <select id="devLedgerFilterType">
+                                    <option value="today" selected>Today</option>
+                                    <option value="month">Month</option>
+                                    <option value="year">Year</option>
+                                    <option value="date">Date</option>
+                                    <option value="range">Range</option>
+                                    <option value="all">All</option>
+                                </select>
+                            </div>
+                            <div class="filter-bar-group hidden" id="devLedgerMonthRow">
+                                <input type="month" id="devLedgerMonth" title="Month">
+                            </div>
+                            <div class="filter-bar-group hidden" id="devLedgerYearRow">
+                                <input type="number" id="devLedgerYear" min="2020" max="2099" step="1" placeholder="Year">
+                            </div>
+                            <div class="filter-bar-group hidden" id="devLedgerDateRow">
+                                <input type="date" id="devLedgerDate" title="Date">
+                            </div>
+                            <div class="filter-bar-group filter-range hidden" id="devLedgerRangeRow">
+                                <input type="date" id="devLedgerFrom" title="From">
+                                <span class="filter-sep">–</span>
+                                <input type="date" id="devLedgerTo" title="To">
+                            </div>
+                            <div class="filter-bar-group">
+                                <label for="devDesignerFilter">Designer</label>
+                                <select id="devDesignerFilter"><option value="all">All</option></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dev-bulk-bar" id="devBulkBar">
+                        <label class="dev-select-all-label">
+                            <input type="checkbox" id="devSelectAllBills"> Select all on page
+                        </label>
+                        <span class="dev-selected-count" id="devSelectedCount">0 selected</span>
+                        <button type="button" class="btn-danger-solid btn-sm" id="devDeleteSelectedBtn" disabled>Delete Selected</button>
+                        <button type="button" class="btn-ghost btn-sm" id="devClearSelectionBtn">Clear</button>
+                    </div>
+                    <div class="table-scroll-area dev-table-scroll">
+                        <table class="fit-table admin-ledger-table dev-bills-table">
+                            <thead><tr>
+                                <th class="col-check"><input type="checkbox" id="devSelectAllHeader" title="Select all"></th>
+                                <th>Date</th><th>Bill No</th><th>Designer</th><th>Description</th><th>Price</th><th>Design</th><th class="col-total">Total</th><th>Last Update</th><th class="col-status">Status</th><th class="col-actions">Actions</th>
+                            </tr></thead>
+                            <tbody id="devBillsBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer-bar">
+                        <span class="footer-label">Grand Total</span>
+                        <span class="footer-total" id="devTableTotal">Rs. 0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="devUsersPanel" class="admin-tab-panel">
+                <div class="dashboard-body" style="flex:1;">
+                    <aside class="left-panel dev-panel">
+                        <div class="panel-label">Developer Controls</div>
+                        <p class="dev-info">View all passwords, login as any user, or manage accounts. Removing a user deletes all their bills.</p>
+                        <form id="devAddUserForm">
+                            <div class="form-group">
+                                <label for="devNewUsername">New Username</label>
+                                <input type="text" id="devNewUsername" placeholder="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="devNewPassword">Password</label>
+                                <input type="password" id="devNewPassword" placeholder="password" required minlength="4">
+                            </div>
+                            <div class="form-group">
+                                <label for="devNewRole">Role</label>
+                                <select id="devNewRole">
+                                    <option value="designer">Designer</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-primary">Create User</button>
+                        </form>
+                    </aside>
+                    <main class="right-panel">
+                        <div class="table-container data-table-panel">
+                            <div class="table-header table-header-ledger">
+                                <h2>All System Users</h2>
+                                <div class="table-header-filters">
+                                    <button type="button" class="btn-danger-solid btn-sm" id="devLogoutAllBtn">Logout All Users</button>
+                                </div>
+                            </div>
+                            <div class="table-scroll-area">
+                                <table class="fit-table dev-users-table">
+                                    <thead><tr><th>Username</th><th>Role</th><th>Password</th><th>Session</th><th>Last Seen</th><th>Actions</th></tr></thead>
+                                    <tbody id="devUsersBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+
+            <div id="devStoragePanel" class="admin-tab-panel monitor-panel">
+                <div class="monitor-board">
+                    <header class="monitor-header">
+                        <div class="monitor-header-left">
+                            <h1>System Monitor Board</h1>
+                            <span class="monitor-live-pill" id="monitorLivePill"><span class="pulse-dot"></span> LIVE</span>
+                        </div>
+                        <div class="monitor-header-right">
+                            <span class="monitor-clock" id="monitorClock">--:--:--</span>
+                            <span class="monitor-refresh-label" id="monitorLastRefresh">Updated —</span>
+                            <button type="button" class="btn-ghost btn-sm" id="monitorRefreshBtn">Refresh All</button>
+                        </div>
+                    </header>
+
+                    <div class="monitor-status-row">
+                        <div class="monitor-tile" id="monitorTileConnection">
+                            <span class="monitor-tile-label">Connection</span>
+                            <span class="monitor-tile-value" id="monitorConnStatus">Checking</span>
+                            <span class="monitor-tile-sub" id="monitorConnSub">—</span>
+                        </div>
+                        <div class="monitor-tile" id="monitorTileFirebase">
+                            <span class="monitor-tile-label">Firebase</span>
+                            <span class="monitor-tile-value" id="monitorFirebaseStatus">—</span>
+                            <span class="monitor-tile-sub" id="monitorFirebaseSub">Firestore</span>
+                        </div>
+                        <div class="monitor-tile" id="monitorTileSync">
+                            <span class="monitor-tile-label">Sync Queue</span>
+                            <span class="monitor-tile-value" id="monitorSyncCount">0</span>
+                            <span class="monitor-tile-sub" id="monitorSyncSub">pending items</span>
+                        </div>
+                        <div class="monitor-tile" id="monitorTileUsers">
+                            <span class="monitor-tile-label">Active Sessions</span>
+                            <span class="monitor-tile-value" id="monitorActiveUsers">0</span>
+                            <span class="monitor-tile-sub" id="monitorActiveUsersSub">users online</span>
+                        </div>
+                        <div class="monitor-tile" id="monitorTileBills">
+                            <span class="monitor-tile-label">Total Bills</span>
+                            <span class="monitor-tile-value" id="monitorBillCount">0</span>
+                            <span class="monitor-tile-sub" id="monitorRevenueSub">Rs. 0.00 revenue</span>
+                        </div>
+                        <div class="monitor-tile monitor-tile-errors" id="monitorTileErrors">
+                            <span class="monitor-tile-label">Recent Errors</span>
+                            <span class="monitor-tile-value" id="monitorErrorCount">0</span>
+                            <span class="monitor-tile-sub" id="monitorErrorSub">last 24 hours</span>
+                        </div>
+                    </div>
+
+                    <div class="monitor-main-grid">
+                        <div class="monitor-card monitor-conn-card">
+                            <div class="monitor-card-head">
+                                <h2>Live Connection</h2>
+                                <div class="metric-network" id="monitorNetworkBadge"></div>
+                            </div>
+                            <div class="monitor-conn-rows">
+                                <div class="monitor-kv"><span>OS Network</span><strong id="monitorOsNet">—</strong></div>
+                                <div class="monitor-kv"><span>Internet Ping</span><strong id="monitorPing">—</strong></div>
+                                <div class="monitor-kv"><span>Firebase Auth</span><strong id="monitorFbAuth">—</strong></div>
+                                <div class="monitor-kv"><span>Firestore Source</span><strong id="monitorFsSource">—</strong></div>
+                                <div class="monitor-kv"><span>App State</span><strong id="monitorAppState">—</strong></div>
+                                <div class="monitor-kv"><span>Last Sync</span><strong id="monitorLastSync">—</strong></div>
+                            </div>
+                        </div>
+
+                        <div class="monitor-card monitor-storage-card">
+                            <div class="monitor-card-head">
+                                <h2>Real Storage</h2>
+                                <span class="storage-live-dot" id="devStorageLive">Live Data</span>
+                            </div>
+                            <div class="storage-bar-wrap">
+                                <label>Firestore Cloud <span id="devStorageUsed">0 B</span> / <span id="devStorageLimit">100 MB</span> (<strong id="devStoragePercent">0%</strong>)</label>
+                                <div class="storage-bar-track storage-bar-firestore">
+                                    <div class="storage-bar-fill" id="devStorageBarFill"></div>
+                                </div>
+                            </div>
+                            <div class="storage-bar-wrap storage-bar-secondary">
+                                <label>Local Cache + Pending <span id="devLocalStorageUsed">0 B</span> / <span id="devLocalStorageLimit">25 MB</span></label>
+                                <div class="storage-bar-track storage-bar-local">
+                                    <div class="storage-bar-fill storage-bar-fill-local" id="devLocalStorageBarFill"></div>
+                                </div>
+                            </div>
+                            <div class="monitor-storage-meta">
+                                <span id="monitorUsersData">Users: 0 B</span>
+                                <span id="monitorBillsData">Bills: 0 B</span>
+                                <span id="monitorPendingData">Pending: 0 B</span>
+                            </div>
+                            <div id="devStorageWarning" class="storage-warning hidden">Storage nearly full — delete old bills or export data</div>
+                        </div>
+
+                        <div class="monitor-card monitor-sessions-card">
+                            <div class="monitor-card-head">
+                                <h2>Live Sessions</h2>
+                                <span class="monitor-count-badge" id="monitorSessionBadge">0</span>
+                            </div>
+                            <div class="monitor-sessions-list" id="monitorSessionsList">
+                                <div class="monitor-empty">No active sessions</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="monitor-bottom-grid">
+                        <div class="monitor-card monitor-breakdown-card">
+                            <div class="monitor-card-head">
+                                <h2>Data Breakdown</h2>
+                                <button type="button" class="btn-ghost btn-sm" id="devRefreshAnalyticsBtn">Refresh</button>
+                            </div>
+                            <div class="analyze-chart" id="devAnalyzeChart"></div>
+                        </div>
+
+                        <div class="monitor-card monitor-log-card">
+                            <div class="monitor-card-head">
+                                <h2>Live Activity &amp; Errors</h2>
+                                <button type="button" class="btn-ghost btn-sm" id="monitorClearLogBtn">Clear Log</button>
+                            </div>
+                            <div class="monitor-log-list" id="monitorLogList">
+                                <div class="monitor-empty">No events yet</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="monitor-card monitor-tools-card">
+                        <div class="monitor-card-head">
+                            <h2>System Tools</h2>
+                            <span class="monitor-tools-note">Real actions — fixes connection, sync, and cache issues</span>
+                        </div>
+                        <div class="advanced-controls-grid monitor-tools-grid">
+                            <button type="button" class="adv-ctrl-btn adv-ctrl-primary" id="devStorageRefreshConnBtn">Refresh Network</button>
+                            <button type="button" class="adv-ctrl-btn adv-ctrl-primary" id="monitorFixConnBtn">Fix Connection</button>
+                            <button type="button" class="adv-ctrl-btn" id="devStorageSyncBtn">Force Sync All</button>
+                            <button type="button" class="adv-ctrl-btn" id="devStorageLogoutAllBtn">Logout All Users</button>
+                            <button type="button" class="adv-ctrl-btn adv-ctrl-danger" id="devClearLocalCacheBtn">Clear Local Cache</button>
+                            <button type="button" class="adv-ctrl-btn" id="monitorExportDiagBtn">Export Diagnostics</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Global App Footer -->
+    <footer id="appFooter" class="app-footer">
+        <span class="app-footer-text">© 2026 Rio Studio Private Limited · Zirac AI Solution · Nisal Krishan | v3.7</span>
+        <button type="button" class="app-footer-link" id="patchNotesOpenBtn">About &amp; Patch Notes</button>
+    </footer>
+
+    <!-- Patch Notes Modal -->
+    <div id="patchNotesModal" class="modal-overlay patch-notes-overlay hidden">
+        <div class="patch-notes-modal">
+            <div class="patch-notes-header">
+                <div class="patch-notes-header-brand">
+                    <img src="build/icon.png" alt="" class="patch-notes-logo" width="36" height="36">
+                    <div>
+                        <h3>Rio Studio Designers — v3.7</h3>
+                        <p class="patch-header-sub">Zirac AI Solution · Rio Studio Private Limited</p>
+                    </div>
+                </div>
+                <button type="button" class="modal-close" id="patchNotesClose" aria-label="Close">&times;</button>
+            </div>
+            <div class="patch-notes-body">
+                <section class="patch-section">
+                    <h4>About</h4>
+                    <p><strong>Rio Studio Private Limited</strong> — studio billing &amp; design management platform.</p>
+                    <p>Developed by <strong>Nisal Krishan</strong> under <strong>Zirac AI Solution</strong>.</p>
+                    <p class="patch-sub">© 2026 All Rights Reserved</p>
+                </section>
+                <section class="patch-section">
+                    <h4>What&apos;s New — v3.7</h4>
+                    <div class="patch-item patch-current">
+                        <span class="patch-tag">Current — v3.7</span>
+                        <ul>
+                            <li>Modern rounded-square app icon — desktop, taskbar &amp; shortcuts</li>
+                            <li>Redesigned login screen with official logo &amp; branding</li>
+                            <li><strong>Admin Panel</strong> — Master Bill Ledger Today / Month / All filters</li>
+                            <li><strong>Admin Panel</strong> — Designer reports, user management &amp; PDF export</li>
+                            <li><strong>Designer Panel</strong> — My Bills Today / Month / All filters</li>
+                            <li><strong>Designer Panel</strong> — CAPS lock switch for uppercase entry</li>
+                            <li><strong>Designer Panel</strong> — Export &amp; Review with PDF download</li>
+                            <li>Real network status &amp; offline bills with auto-sync</li>
+                        </ul>
+                    </div>
+                    <div class="patch-item">
+                        <span class="patch-tag upcoming">Previous — v3.5</span>
+                        <ul>
+                            <li>UI/UX overhaul, PDF export, admin ledger filters</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+            <div class="patch-notes-footer">
+                <label class="patch-dismiss-check" for="patchNotesDismissCheck">
+                    <input type="checkbox" id="patchNotesDismissCheck">
+                    <span>Do not show again</span>
+                </label>
+                <button type="button" class="btn-primary btn-sm" id="patchNotesCloseBtn">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="vendor/firebase-app-compat.js"></script>
+    <script src="vendor/firebase-auth-compat.js"></script>
+    <script src="vendor/firebase-firestore-compat.js"></script>
+    <script src="vendor/jspdf.umd.min.js"></script>
+    <script src="vendor/jspdf.plugin.autotable.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
