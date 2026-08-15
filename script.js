@@ -3327,7 +3327,20 @@ function printReport(title, totalAmount, subtitle = "") {
                         else if (activeConfig.panel === 'designer' && typeof refreshDesignerBillsView === 'function') refreshDesignerBillsView();
                         else if (activeConfig.panel === 'dev' && typeof refreshDevBillsView === 'function') refreshDevBillsView();
                         // Scroll to and highlight the selected bill row
-                        setTimeout(() => scrollToBill(selectedBill.bill.id), 100);
+                        setTimeout(() => {
+                            scrollToBill(selectedBill.bill.id);
+                            // Auto-select the bill row in dev panel
+                            if (activeConfig.panel === 'dev') {
+                                const row = document.querySelector(`tr[data-bill-id="${selectedBill.bill.id}"]`) || 
+                                           document.querySelector(`tr[data-key="${billSelectKey(selectedBill.bill)}"]`);
+                                if (row) {
+                                    const checkbox = row.querySelector('.dev-bill-check');
+                                    if (checkbox && !checkbox.checked) {
+                                        checkbox.click();
+                                    }
+                                }
+                            }
+                        }, 100);
                     }
                 }
             });
