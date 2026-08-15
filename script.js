@@ -1394,6 +1394,11 @@ function routeUser(restored = false) {
     startSessionMonitor();
     if (serverConnected && getPendingCount() > 0) scheduleAutoSync(500);
     else if (serverConnected) syncAll(false);
+    
+    // Initialize chat system for designers and developers only (not admin)
+    if (currentUser.role === "designer" || currentUser.role === "developer") {
+        initChatSystem();
+    }
 }
 
 function logout(isAuto = false, remote = false) {
