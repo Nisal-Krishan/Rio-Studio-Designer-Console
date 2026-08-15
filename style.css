@@ -2654,24 +2654,28 @@ tfoot th {
 }
 
 .designer-ledger-header {
-    gap: 10px 14px;
+    gap: 12px 16px;
 }
 
 .designer-ledger-head {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 15px;
     flex-shrink: 0;
     margin-right: auto;
 }
 
 .designer-ledger-head h2 {
     margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
 
 .designer-ledger-header .table-header-filters {
     flex: 1;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    gap: 11px;
 }
 
 .designer-ledger-header .btn-fullview-icon {
@@ -2970,7 +2974,7 @@ tfoot th {
 .filter-bar-group {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
 }
 
 .filter-bar-group.hidden {
@@ -2978,7 +2982,7 @@ tfoot th {
 }
 
 .filter-bar-group label {
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -2990,33 +2994,35 @@ tfoot th {
 .filter-bar-group input[type="date"],
 .filter-bar-group input[type="month"],
 .filter-bar-group input[type="number"] {
-    padding: 8px 10px;
+    padding: 8px 11px;
     background: var(--bg);
     border: 1px solid var(--border);
     color: var(--text);
-    border-radius: var(--r-sm);
+    border-radius: var(--r-md);
     font-size: 13px;
     font-family: inherit;
     outline: none;
     min-width: 0;
+    transition: all 0.2s ease;
 }
 
 .filter-bar-group select {
-    min-width: 88px;
+    min-width: 92px;
 }
 
 .filter-bar-group input[type="month"],
 .filter-bar-group input[type="date"] {
-    width: 140px;
+    width: 145px;
 }
 
 .filter-bar-group input[type="number"] {
-    width: 88px;
+    width: 92px;
 }
 
 .filter-bar-group select:focus,
 .filter-bar-group input:focus {
     border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
 .filter-bar-group.filter-range {
@@ -3038,51 +3044,57 @@ tfoot th {
 
 .filter-quick-btns {
     display: flex;
-    gap: 6px;
+    gap: 7px;
+    flex-shrink: 0;
 }
 
 .filter-quick-btn {
-    padding: 6px 14px;
-    font-size: 11px;
+    padding: 7px 15px;
+    font-size: 11.5px;
     font-weight: 700;
     font-family: inherit;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
     color: var(--text-muted);
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: var(--r-sm);
+    border-radius: var(--r-md);
     cursor: pointer;
-    transition: var(--tr);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .filter-quick-btn:hover {
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.25);
     color: var(--text-secondary);
+    transform: translateY(-1px);
 }
 
 .filter-quick-btn.active {
     color: var(--accent-soft);
     border-color: var(--border-accent);
     background: var(--accent-bg);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
 }
 
 .table-header-ledger {
     flex-wrap: wrap;
-    gap: 10px 14px;
+    gap: 12px 16px;
     align-items: center;
 }
 
 .table-header-ledger h2 {
     flex-shrink: 0;
     margin-right: auto;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
 
 .table-header-filters {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px 10px;
+    gap: 10px 12px;
     flex: 1;
     justify-content: flex-end;
     min-width: 0;
@@ -3101,80 +3113,96 @@ tfoot th {
     position: relative;
     flex: 1;
     min-width: 280px;
-    max-width: 520px;
+    max-width: 480px;
 }
 
 .search-bar-wrapper.search-full-width {
     max-width: none;
-    min-width: 320px;
+    min-width: 340px;
 }
 
 .search-icon {
     position: absolute;
-    left: 14px;
+    left: 15px;
     top: 50%;
     transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
+    width: 19px;
+    height: 19px;
     color: var(--text-muted);
     pointer-events: none;
     z-index: 2;
+    transition: all 0.25s ease;
+}
+
+.search-bar-wrapper:focus-within .search-icon {
+    color: var(--accent);
+    transform: translateY(-50%) scale(1.05);
 }
 
 .search-input-full {
     width: 100%;
-    padding: 10px 14px 10px 42px;
+    padding: 11px 15px 11px 44px;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: var(--r-sm);
+    border-radius: var(--r-md);
     color: var(--text);
-    font-size: 13px;
+    font-size: 13.5px;
     font-family: inherit;
     outline: none;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.01em;
 }
 
 .search-input-full:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
+    box-shadow: 0 0 0 3px var(--accent-glow), 0 4px 12px rgba(99, 102, 241, 0.15);
     background: #000;
     transform: translateY(-1px);
+    padding-left: 46px;
 }
 
 .search-input-full::placeholder {
     color: var(--text-muted);
-    transition: opacity 0.2s ease;
+    transition: opacity 0.25s ease;
+    font-weight: 400;
 }
 
 .search-input-full:focus::placeholder {
-    opacity: 0.5;
+    opacity: 0.45;
 }
 
 .search-suggestions {
     position: absolute;
-    top: calc(100% + 6px);
+    top: calc(100% + 8px);
     left: 0;
     right: 0;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--r-sm);
-    box-shadow: var(--shadow);
+    border-radius: var(--r-md);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(99, 102, 241, 0.1);
     z-index: 100;
-    max-height: 320px;
+    max-height: 340px;
     overflow-y: auto;
     display: none;
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
+    backdrop-filter: blur(8px);
 }
 
 .search-suggestions.active {
     display: block;
-    animation: fadeIn 0.15s ease-out;
+    animation: slideDownFade 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes slideDownFade {
+    from { 
+        opacity: 0; 
+        transform: translateY(-6px);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
 }
 
 .search-suggestions::-webkit-scrollbar {
@@ -3195,10 +3223,10 @@ tfoot th {
 }
 
 .search-suggestion-item {
-    padding: 10px 14px;
+    padding: 12px 16px;
     cursor: pointer;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    transition: all 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 
@@ -3209,7 +3237,7 @@ tfoot th {
 .search-suggestion-item:hover,
 .search-suggestion-item.highlighted {
     background: var(--accent-bg);
-    padding-left: 18px;
+    padding-left: 20px;
 }
 
 .search-suggestion-item.highlighted {
@@ -3217,23 +3245,25 @@ tfoot th {
 }
 
 .search-suggestion-item .suggestion-main {
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 600;
     color: var(--text);
-    margin-bottom: 2px;
+    margin-bottom: 3px;
+    letter-spacing: 0.01em;
 }
 
 .search-suggestion-item .suggestion-sub {
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--text-muted);
+    font-weight: 400;
 }
 
 .search-suggestion-item .suggestion-highlight {
     color: var(--accent-soft);
     font-weight: 700;
-    background: rgba(99, 102, 241, 0.1);
-    padding: 1px 3px;
-    border-radius: 2px;
+    background: rgba(99, 102, 241, 0.12);
+    padding: 2px 5px;
+    border-radius: 3px;
 }
 
 /* ═══ EXPORT & REVIEW ═══ */
@@ -3428,30 +3458,32 @@ tfoot th {
 .my-total-compact {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    padding: 5px 12px;
+    gap: 9px;
+    padding: 6px 13px;
     background: var(--accent-bg);
     border: 1px solid var(--border-accent);
-    border-radius: var(--r-sm);
+    border-radius: var(--r-md);
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
 }
 
 .my-total-compact .my-total-label {
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 800;
     text-transform: uppercase;
     color: var(--accent-soft);
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
 }
 
 .my-total-compact .my-total-value {
-    font-size: 15px;
+    font-size: 15.5px;
     font-weight: 900;
     color: var(--accent-soft);
+    letter-spacing: 0.01em;
 }
 
 .my-total-compact .my-total-count {
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--text-muted);
     font-weight: 600;
 }
