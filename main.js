@@ -2,20 +2,10 @@ const { app, BrowserWindow, ipcMain, dialog, net, nativeImage } = require("elect
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
-const { autoUpdater } = require("electron-updater");
 
 const APP_ID = "com.ziracai.rio.studio.designers";
 const APP_ICON_PNG = path.join(__dirname, "build", "icon.png");
 const APP_ICON_ICO = path.join(__dirname, "build", "icon.ico");
-
-// ── Auto-Updater Configuration ──
-autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
-autoUpdater.allowDowngrade = false;
-autoUpdater.allowPrerelease = false;
-
-// Disable differential downloads for simpler setup
-autoUpdater.differentialPackage = false;
 
 function resolveAppIcon() {
     for (const iconPath of [APP_ICON_PNG, APP_ICON_ICO]) {
@@ -25,6 +15,7 @@ function resolveAppIcon() {
     }
     return undefined;
 }
+
 const PING_HOST = "connectivitycheck.gstatic.com";
 const PING_PATH = "/generate_204";
 const POLL_FAST_MS = 200;
@@ -126,6 +117,7 @@ function createWindow() {
         height: 860,
         minWidth: 900,
         minHeight: 600,
+        show: false,
         title: "Rio Studio Designers",
         icon: winIcon,
         autoHideMenuBar: true,
@@ -137,7 +129,18 @@ function createWindow() {
             preload: path.join(__dirname, "preload.js")
         }
     });
-    mainWindow.loadFile("index.html");
+
+    mainWindow.once("ready-to-show", () => {
+        if (!mainWindow || mainWindow.isDestroyed()) return;
+        mainWindow.show();
+        mainWindow.focus();
+    });
+
+    mainWindow.loadFile("index.html").catch((err) => {
+        dialog.showErrorBox("Rio Studio Designers", "Failed to load app: " + (err?.message || err));
+        app.quit();
+    });
+
     mainWindow.webContents.on("did-finish-load", () => startNetworkPolling());
     mainWindow.on("closed", () => {
         mainWindow = null;
@@ -147,7 +150,6 @@ function createWindow() {
 
 ipcMain.handle("net:getStatus", () => readNetworkStatus());
 
-// ── PDF Save via Electron's native Chromium PDF engine ──
 ipcMain.handle("save-pdf", async (event, htmlContent) => {
     const tempPath = path.join(app.getPath("temp"), "rio_pdf_temp.html");
     fs.writeFileSync(tempPath, htmlContent, "utf8");
@@ -188,87 +190,37 @@ ipcMain.handle("save-pdf", async (event, htmlContent) => {
     return { success: false };
 });
 
-// ── Auto-Updater IPC Handlers ──
-ipcMain.handle("check-for-updates", async () => {
-    try {
-        const info = await autoUpdater.checkForUpdates();
-        return { success: true, hasUpdate: !!info?.updateInfo };
-    } catch (err) {
-        console.error("[AutoUpdater] Check failed:", err.message);
-        return { success: false, error: err.message };
-    }
-});
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+    app.quit();
+} else {
+    app.on("second-instance", () => {
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.show();
+            mainWindow.focus();
+        }
+    });
 
-ipcMain.handle("restart-and-install", () => {
-    autoUpdater.quitAndInstall(false, true);
-});
-
-// ── Auto-Updater Event Listeners ──
-autoUpdater.on("checking-for-update", () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("update-checking");
-    }
-});
-
-autoUpdater.on("update-available", (info) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("update-available", {
-            version: info?.version || "latest"
-        });
-    }
-});
-
-autoUpdater.on("update-not-available", () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("update-not-available");
-    }
-});
-
-autoUpdater.on("download-progress", (progressObj) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("update-download-progress", {
-            percent: progressObj.percent,
-            transferred: progressObj.transferred,
-            total: progressObj.total,
-            bytesPerSecond: progressObj.bytesPerSecond
-        });
-    }
-});
-
-autoUpdater.on("update-downloaded", (info) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("update-downloaded", {
-            version: info?.version || "latest"
-        });
-    }
-});
-
-autoUpdater.on("error", (err) => {
-    console.error("[AutoUpdater] Error:", err.message);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("update-error", {
-            message: err.message
-        });
-    }
-});
-
-app.whenReady().then(() => {
-    if (process.platform === "win32") app.setAppUserModelId(APP_ID);
-    else {
-        const appIcon = resolveAppIcon();
-        if (appIcon) app.setIcon(appIcon);
-    }
-    createWindow();
-    
-    // Start checking for updates after a short delay
-    setTimeout(() => {
-        autoUpdater.checkForUpdates().catch((err) => {
-            console.error("[AutoUpdater] Initial check failed:", err.message);
-        });
-    }, 1500);
-});
+    app.whenReady().then(() => {
+        if (process.platform === "win32") app.setAppUserModelId(APP_ID);
+        else {
+            const appIcon = resolveAppIcon();
+            if (appIcon) app.setIcon(appIcon);
+        }
+        createWindow();
+    });
+}
 
 app.on("window-all-closed", () => {
     stopNetworkPolling();
     if (process.platform !== "darwin") app.quit();
+});
+
+process.on("uncaughtException", (err) => {
+    console.error("[Main] Uncaught exception:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+    console.error("[Main] Unhandled rejection:", err);
 });

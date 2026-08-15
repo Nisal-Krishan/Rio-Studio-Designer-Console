@@ -3031,11 +3031,9 @@ initDesignerCapsLock();
         if (updateModalFooter) updateModalFooter.classList.remove("hidden");
     });
 
-    // Listen for errors
+    // Listen for errors — silent on startup (no GitHub release yet)
     window.rioUpdater.onUpdateError((error) => {
-        console.error("[Updater] Error:", error.message);
-        if (updateStatusText) updateStatusText.textContent = "Update check failed";
-        showToast("Update check failed: " + (error.message || "Unknown error"), true);
+        console.warn("[Updater] Skipped:", error.message);
     });
 
     // Restart & Install button

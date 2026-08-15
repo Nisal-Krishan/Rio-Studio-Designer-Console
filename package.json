@@ -1,6 +1,6 @@
 {
   "name": "rio-studio-designers",
-  "version": "3.7.0",
+  "version": "3.7.1",
   "description": "Rio Studio Private Limited — Billing & Design POS by Zirac AI Solution",
   "author": "Nisal Krishan - Zirac AI Solution",
   "main": "main.js",
@@ -48,12 +48,7 @@
       "license": "build/license.txt",
       "displayLanguageSelector": false
     },
-    "publish": {
-      "provider": "github",
-      "owner": "nisalkrishan",
-      "repo": "Rio-Studio-Console",
-      "releaseType": "release"
-    },
+    "publish": null,
     "files": [
       "main.js",
       "preload.js",
