@@ -177,7 +177,50 @@
         </div>
     </div>
 
-    <!-- Chat Modal (Designer <-> Dev) -->
+    <!-- Floating Chat Button (always visible for designers & devs) -->
+    <div id="floatingChatBtn" class="floating-chat-btn hidden" title="Open Chat">
+        <svg class="floating-chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span class="floating-chat-badge hidden" id="floatingChatBadge">0</span>
+    </div>
+
+    <!-- Chat Panel (slide-in from right) -->
+    <div id="chatPanel" class="chat-panel hidden">
+        <div class="chat-panel-header">
+            <div class="chat-panel-title">
+                <svg class="chat-panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <div class="chat-panel-text">
+                    <h3 id="chatPanelTitle">Chat</h3>
+                    <p id="chatPanelSubtitle">Online</p>
+                </div>
+            </div>
+            <button type="button" class="chat-panel-close" id="chatPanelClose" title="Close Chat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="chat-panel-messages" id="chatMessagesContainer">
+            <div class="chat-welcome-message">
+                <p>Welcome to the chat! Messages are visible to all designers and the developer.</p>
+            </div>
+        </div>
+        <div class="chat-panel-input">
+            <input type="text" id="chatMessageInput" placeholder="Type your message..." maxlength="500" autocomplete="off">
+            <button type="button" class="chat-panel-send" id="chatSendBtn" title="Send Message">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Old Chat Modal (kept for compatibility, hidden by default) -->
     <div id="chatModal" class="modal-overlay hidden">
         <div class="chat-modal-card">
             <div class="chat-modal-header">
@@ -190,14 +233,14 @@
                 <button type="button" class="modal-close" id="chatModalClose">&times;</button>
             </div>
             <div class="chat-modal-body">
-                <div class="chat-messages-container" id="chatMessagesContainer">
+                <div class="chat-messages-container" id="chatMessagesContainerOld">
                     <div class="chat-welcome-message">
                         <p>Welcome to the chat! Messages are visible to all designers and the developer.</p>
                     </div>
                 </div>
                 <div class="chat-input-area">
-                    <input type="text" id="chatMessageInput" placeholder="Type your message..." maxlength="500" autocomplete="off">
-                    <button type="button" class="btn-chat-send" id="chatSendBtn">
+                    <input type="text" id="chatMessageInputOld" placeholder="Type your message..." maxlength="500" autocomplete="off">
+                    <button type="button" class="btn-chat-send" id="chatSendBtnOld">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="22" y1="2" x2="11" y2="13"></line>
                             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>

@@ -3356,8 +3356,15 @@ function printReport(title, totalAmount, subtitle = "") {
     modal.addEventListener("click", (e) => { if (e.target === modal) closePatchNotes(); });
 })();
 
-/* ─── Chat System (Designer <-> Dev) ─── */
+/* ─── Chat System (Designer <-> Dev) - NEW FLOATING PANEL ─── */
 (function initChatSystem() {
+    // New floating panel elements
+    const floatingChatBtn = document.getElementById("floatingChatBtn");
+    const chatPanel = document.getElementById("chatPanel");
+    const chatPanelClose = document.getElementById("chatPanelClose");
+    const floatingChatBadge = document.getElementById("floatingChatBadge");
+    
+    // Old modal elements (fallback)
     const chatModal = document.getElementById("chatModal");
     const designerChatToggleBtn = document.getElementById("designerChatToggleBtn");
     const devChatToggleBtn = document.getElementById("devChatToggleBtn");
@@ -3368,7 +3375,7 @@ function printReport(title, totalAmount, subtitle = "") {
     const designerChatBadge = document.getElementById("designerChatBadge");
     const devChatBadge = document.getElementById("devChatBadge");
     
-    if (!chatModal || !chatMessageInput) return;
+    if (!chatPanel || !chatMessageInput) return;
     
     const CHAT_LS_KEY = "rio_chat_messages";
     let unreadCount = { designer: 0, dev: 0 };
@@ -3418,8 +3425,13 @@ function printReport(title, totalAmount, subtitle = "") {
             `;
         }).join('');
         
-        // Scroll to bottom
-        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        // Scroll to bottom with smooth behavior
+        setTimeout(() => {
+            chatMessagesContainer.scrollTo({
+                top: chatMessagesContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }, 50);
     }
     
     function escapeHtml(text) {
@@ -3446,13 +3458,15 @@ function printReport(title, totalAmount, subtitle = "") {
         chatMessageInput.value = '';
         renderMessages();
         
-        // Update badges for other users
+        // Update badges for other users (both navbar and floating)
         if (currentUser.role === 'designer') {
             unreadCount.dev = (unreadCount.dev || 0) + 1;
             updateBadge(devChatBadge, unreadCount.dev);
+            updateBadge(floatingChatBadge, unreadCount.dev);
         } else if (currentUser.role === 'developer') {
             unreadCount.designer = (unreadCount.designer || 0) + 1;
             updateBadge(designerChatBadge, unreadCount.designer);
+            updateBadge(floatingChatBadge, unreadCount.designer);
         }
     }
     
@@ -3467,25 +3481,67 @@ function printReport(title, totalAmount, subtitle = "") {
     }
     
     function openChat() {
-        chatModal.classList.remove('hidden');
+        // Open the new slide-in panel
+        chatPanel.classList.remove('hidden');
+        // Small delay to allow display:block to apply before adding open class for transition
+        setTimeout(() => {
+            chatPanel.classList.add('open');
+        }, 10);
         renderMessages();
         chatMessageInput.focus();
         
-        // Clear unread count for current user
+        // Clear unread count for current user and update floating badge
         if (currentUser?.role === 'designer') {
             unreadCount.designer = 0;
             updateBadge(designerChatBadge, 0);
+            updateBadge(floatingChatBadge, 0);
         } else if (currentUser?.role === 'developer') {
             unreadCount.dev = 0;
             updateBadge(devChatBadge, 0);
+            updateBadge(floatingChatBadge, 0);
         }
     }
     
     function closeChat() {
-        chatModal.classList.add('hidden');
+        chatPanel.classList.remove('open');
+        // Wait for transition to finish before hiding
+        setTimeout(() => {
+            chatPanel.classList.add('hidden');
+        }, 400);
     }
     
-    // Event listeners
+    function showFloatingButton() {
+        if (floatingChatBtn) {
+            floatingChatBtn.classList.remove('hidden');
+        }
+    }
+    
+    function hideFloatingButton() {
+        if (floatingChatBtn) {
+            floatingChatBtn.classList.add('hidden');
+        }
+    }
+    
+    function updateFloatingBadge() {
+        let totalUnread = 0;
+        if (currentUser?.role === 'designer') {
+            totalUnread = unreadCount.designer;
+        } else if (currentUser?.role === 'developer') {
+            totalUnread = unreadCount.dev;
+        }
+        updateBadge(floatingChatBadge, totalUnread);
+    }
+    
+    // Event listeners - New floating button
+    if (floatingChatBtn) {
+        floatingChatBtn.addEventListener('click', openChat);
+    }
+    
+    if (chatPanelClose) {
+        chatPanelClose.addEventListener('click', closeChat);
+    }
+    
+    // Also support old navbar buttons (they now open the panel instead of modal)
     if (designerChatToggleBtn && currentUser?.role === 'designer') {
         designerChatToggleBtn.addEventListener('click', openChat);
     }
@@ -3494,7 +3550,6 @@ function printReport(title, totalAmount, subtitle = "") {
         devChatToggleBtn.addEventListener('click', openChat);
     }
     
-    chatModalClose?.addEventListener('click', closeChat);
     chatSendBtn?.addEventListener('click', sendMessage);
     
     chatMessageInput?.addEventListener('keydown', (e) => {
@@ -3504,10 +3559,17 @@ function printReport(title, totalAmount, subtitle = "") {
         }
     });
     
-    chatModal?.addEventListener('click', (e) => {
-        if (e.target === chatModal) closeChat();
+    // Close panel when clicking outside (on the overlay effect)
+    document.addEventListener('click', (e) => {
+        if (chatPanel && !chatPanel.contains(e.target) && !floatingChatBtn?.contains(e.target) && !chatPanel.classList.contains('hidden')) {
+            closeChat();
+        }
     });
     
-    // Initial render
+    // Show floating button after a short delay on page load
+    setTimeout(showFloatingButton, 1000);
+    
+    // Initial render and badge update
     renderMessages();
+    updateFloatingBadge();
 })();
