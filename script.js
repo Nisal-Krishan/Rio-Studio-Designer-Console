@@ -828,7 +828,7 @@ function updateDevBulkBar() {
     const countEl = document.getElementById("devSelectedCount");
     const delBtn = document.getElementById("devDeleteSelectedBtn");
     const n = devSelectedBills.size;
-    if (countEl) countEl.textContent = `${n} selected`;
+    if (countEl) countEl.textContent = n === 1 ? "1 selected" : `${n} selected`;
     if (delBtn) delBtn.disabled = n === 0;
     const selectAll = document.getElementById("devSelectAllBills");
     const headerAll = document.getElementById("devSelectAllHeader");
@@ -1867,7 +1867,9 @@ function getFilteredAdminLedgerBills(cloud) {
             const desc = (b.description || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const user = (b.username || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const customer = (b.customerName || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            return billNo.includes(query) || desc.includes(query) || user.includes(query) || customer.includes(query);
+            const bid = (b.id || "").toLowerCase();
+            const blid = (b.localId || "").toLowerCase();
+            return billNo.includes(query) || desc.includes(query) || user.includes(query) || customer.includes(query) || bid.includes(query) || blid.includes(query);
         });
     }
     
@@ -1935,7 +1937,9 @@ function getFilteredDevBills(cloud) {
             const desc = (b.description || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const user = (b.username || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const customer = (b.customerName || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            return billNo.includes(query) || desc.includes(query) || user.includes(query) || customer.includes(query);
+            const bid = (b.id || "").toLowerCase();
+            const blid = (b.localId || "").toLowerCase();
+            return billNo.includes(query) || desc.includes(query) || user.includes(query) || customer.includes(query) || bid.includes(query) || blid.includes(query);
         });
     }
     
@@ -2450,7 +2454,9 @@ function refreshDesignerBillsView() {
             const desc = (b.description || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const user = (b.username || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const customer = (b.customerName || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            return billNo.includes(query) || desc.includes(query) || user.includes(query) || customer.includes(query);
+            const bid = (b.id || "").toLowerCase();
+            const blid = (b.localId || "").toLowerCase();
+            return billNo.includes(query) || desc.includes(query) || user.includes(query) || customer.includes(query) || bid.includes(query) || blid.includes(query);
         });
     }
     renderBillsTable("designerBillsBody", filtered, {
@@ -3321,26 +3327,56 @@ function printReport(title, totalAmount, subtitle = "") {
                 if (selectedBill && activeConfig) {
                     const input = document.getElementById(activeConfig.inputId);
                     if (input) {
-                        input.value = selectedBill.bill.billNo || selectedBill.bill.id;
+                        if (activeConfig.panel === 'admin') {
+                            const filterTypeEl = document.getElementById('adminLedgerFilterType');
+                            if (filterTypeEl) {
+                                filterTypeEl.value = 'all';
+                                updateAdminLedgerFilterUI();
+                                syncAdminLedgerQuickBtns();
+                            }
+                        } else if (activeConfig.panel === 'dev') {
+                            const filterTypeEl = document.getElementById('devLedgerFilterType');
+                            if (filterTypeEl) {
+                                filterTypeEl.value = 'all';
+                                updateDevLedgerFilterUI();
+                                syncDevLedgerQuickBtns();
+                            }
+                            const designerFilter = document.getElementById('devDesignerFilter');
+                            if (designerFilter) designerFilter.value = 'all';
+                            devSelectedBills.clear();
+                        } else if (activeConfig.panel === 'designer') {
+                            const filterTypeEl = document.getElementById('designerLedgerFilterType');
+                            if (filterTypeEl) {
+                                filterTypeEl.value = 'all';
+                                updateDesignerLedgerFilterUI();
+                                syncDesignerLedgerQuickBtns();
+                            }
+                        }
+
+                        const billIdForSearch = selectedBill.bill.id || selectedBill.bill.localId || '';
+                        input.value = billIdForSearch;
+
                         hideAllSuggestions();
+
                         if (activeConfig.panel === 'admin' && typeof refreshAdminBillsView === 'function') refreshAdminBillsView();
                         else if (activeConfig.panel === 'designer' && typeof refreshDesignerBillsView === 'function') refreshDesignerBillsView();
                         else if (activeConfig.panel === 'dev' && typeof refreshDevBillsView === 'function') refreshDevBillsView();
-                        // Scroll to and highlight the selected bill row
+
                         setTimeout(() => {
                             scrollToBill(selectedBill.bill.id);
-                            // Auto-select the bill row in dev panel
                             if (activeConfig.panel === 'dev') {
-                                const row = document.querySelector(`tr[data-bill-id="${selectedBill.bill.id}"]`) || 
-                                           document.querySelector(`tr[data-key="${billSelectKey(selectedBill.bill)}"]`);
+                                const key = billSelectKey(selectedBill.bill);
+                                devSelectedBills.add(key);
+                                const row = document.querySelector(`tr[data-bill-id="${selectedBill.bill.id}"]`) ||
+                                           document.querySelector(`tr[data-key="${escAttr(key)}"]`);
                                 if (row) {
                                     const checkbox = row.querySelector('.dev-bill-check');
-                                    if (checkbox && !checkbox.checked) {
-                                        checkbox.click();
-                                    }
+                                    if (checkbox) checkbox.checked = true;
+                                    row.classList.add('selected');
                                 }
+                                updateDevBulkBar();
                             }
-                        }, 100);
+                        }, 120);
                     }
                 }
             });
@@ -3492,9 +3528,53 @@ function printReport(title, totalAmount, subtitle = "") {
             } else if (e.key === 'Enter' && highlightedIndex >= 0) {
                 e.preventDefault();
                 const selectedBill = currentSuggestions[highlightedIndex];
-                if (selectedBill) {
-                    scrollToBill(selectedBill.bill.id);
+                if (selectedBill && activeConfig) {
+                    if (activeConfig.panel === 'admin') {
+                        const filterTypeEl = document.getElementById('adminLedgerFilterType');
+                        if (filterTypeEl) {
+                            filterTypeEl.value = 'all';
+                            updateAdminLedgerFilterUI();
+                            syncAdminLedgerQuickBtns();
+                        }
+                    } else if (activeConfig.panel === 'dev') {
+                        const filterTypeEl = document.getElementById('devLedgerFilterType');
+                        if (filterTypeEl) {
+                            filterTypeEl.value = 'all';
+                            updateDevLedgerFilterUI();
+                            syncDevLedgerQuickBtns();
+                        }
+                        const designerFilter = document.getElementById('devDesignerFilter');
+                        if (designerFilter) designerFilter.value = 'all';
+                        devSelectedBills.clear();
+                    } else if (activeConfig.panel === 'designer') {
+                        const filterTypeEl = document.getElementById('designerLedgerFilterType');
+                        if (filterTypeEl) {
+                            filterTypeEl.value = 'all';
+                            updateDesignerLedgerFilterUI();
+                            syncDesignerLedgerQuickBtns();
+                        }
+                    }
+                    const billIdForSearch = selectedBill.bill.id || selectedBill.bill.localId || '';
+                    input.value = billIdForSearch;
                     hideAllSuggestions();
+                    if (activeConfig.panel === 'admin' && typeof refreshAdminBillsView === 'function') refreshAdminBillsView();
+                    else if (activeConfig.panel === 'designer' && typeof refreshDesignerBillsView === 'function') refreshDesignerBillsView();
+                    else if (activeConfig.panel === 'dev' && typeof refreshDevBillsView === 'function') refreshDevBillsView();
+                    setTimeout(() => {
+                        scrollToBill(selectedBill.bill.id);
+                        if (activeConfig.panel === 'dev') {
+                            const key = billSelectKey(selectedBill.bill);
+                            devSelectedBills.add(key);
+                            const row = document.querySelector(`tr[data-bill-id="${selectedBill.bill.id}"]`) ||
+                                       document.querySelector(`tr[data-key="${escAttr(key)}"]`);
+                            if (row) {
+                                const checkbox = row.querySelector('.dev-bill-check');
+                                if (checkbox) checkbox.checked = true;
+                                row.classList.add('selected');
+                            }
+                            updateDevBulkBar();
+                        }
+                    }, 120);
                 }
             } else if (e.key === 'Escape') {
                 hideAllSuggestions();

@@ -525,26 +525,32 @@
                     </aside>
                     <main class="right-panel designer-bills-panel">
                         <div class="table-container data-table-panel">
-                            <div class="table-header table-header-ledger designer-ledger-header">
-                                <div class="designer-ledger-head">
+                            <div class="table-header table-header-ledger designer-ledger-header designer-polima">
+                                <div class="polima-block polima-brand">
                                     <h2>My Bills</h2>
+                                </div>
+                                <div class="polima-block polima-stats">
                                     <div class="my-total-compact">
                                         <span class="my-total-label">My Total</span>
                                         <span class="my-total-value" id="designerTotalRevenue">Rs. 0.00</span>
                                         <span class="my-total-count" id="designerBillCount">0 bills</span>
                                     </div>
                                 </div>
-                                <div class="table-header-filters">
+                                <div class="polima-block polima-search">
                                     <div class="search-bar-wrapper">
                                         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                                         <input type="text" class="search-input-full" id="designerLedgerSearch" placeholder="Search by bill no, description, designer..." autocomplete="off">
                                         <div class="search-suggestions" id="designerLedgerSuggestions"></div>
                                     </div>
+                                </div>
+                                <div class="polima-block polima-quick">
                                     <div class="filter-quick-btns">
                                         <button type="button" class="filter-quick-btn active" data-designer-list-filter="today" id="designerListTodayBtn">Today</button>
                                         <button type="button" class="filter-quick-btn" data-designer-list-filter="month" id="designerListMonthBtn">This Month</button>
                                         <button type="button" class="filter-quick-btn" data-designer-list-filter="all" id="designerListAllBtn">All</button>
                                     </div>
+                                </div>
+                                <div class="polima-block polima-period">
                                     <div class="filter-bar-group">
                                         <label for="listFilterType">Period</label>
                                         <select id="listFilterType">
@@ -571,9 +577,11 @@
                                         <input type="date" id="listFilterTo" title="To">
                                     </div>
                                 </div>
-                                <button type="button" class="btn-fullview-icon" id="designerBillsFullViewBtn" title="Full View" aria-label="Full View">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                                </button>
+                                <div class="polima-block polima-actions">
+                                    <button type="button" class="btn-fullview-icon" id="designerBillsFullViewBtn" title="Full View" aria-label="Full View">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="table-scroll-area">
                                 <table id="designerBillsTable" class="designer-bills-table fit-table">
@@ -668,7 +676,7 @@
             <div class="logo">rio<span class="accent">studio</span><span class="badge dev-badge">DEV PANEL</span></div>
             <div class="nav-tabs">
                 <button class="nav-tab active" data-dev-tab="devBillsPanel">All Data / Bills</button>
-                <button class="nav-tab" data-dev-tab="devStoragePanel">Monitor Board</button>
+                <button class="nav-tab" data-dev-tab="devStoragePanel">Dashboard &amp; Logs</button>
                 <button class="nav-tab" data-dev-tab="devUsersPanel">All Users</button>
             </div>
             <div class="nav-right">
@@ -684,84 +692,71 @@
 
         <div class="admin-panel-content dev-content">
             <div id="devBillsPanel" class="admin-tab-panel active">
-                <div class="revenue-banner">
-                    <div class="stat-card dev-stat">
-                        <div class="stat-label">Total System Revenue</div>
-                        <div class="stat-value" id="devTotalRevenue">Rs. 0.00</div>
-                        <div class="stat-sub" id="devBillCount">0 bills</div>
-                    </div>
-                    <div class="stat-card dev-stat">
-                        <div class="stat-label">Total Users</div>
-                        <div class="stat-value" id="devUserCount" style="color:var(--green);">0</div>
-                        <div class="stat-sub">Full data control</div>
-                    </div>
-                </div>
                 <div class="table-container data-table-panel">
                     <div class="table-header table-header-ledger">
-                        <h2>Complete Bill Database</h2>
-                        <div class="table-header-filters">
-                            <div class="search-bar-wrapper">
-                                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                                <input type="text" class="search-input-full" id="devLedgerSearch" placeholder="Search by bill no, description, designer..." autocomplete="off">
-                                <div class="search-suggestions" id="devLedgerSuggestions"></div>
-                            </div>
-                            <div class="filter-quick-btns">
-                                <button type="button" class="filter-quick-btn active" data-dev-ledger-filter="today" id="devLedgerTodayBtn">Today</button>
-                                <button type="button" class="filter-quick-btn" data-dev-ledger-filter="month" id="devLedgerMonthBtn">This Month</button>
-                                <button type="button" class="filter-quick-btn" data-dev-ledger-filter="all" id="devLedgerAllBtn">All</button>
-                            </div>
-                            <div class="filter-bar-group">
-                                <label for="devLedgerFilterType">Period</label>
-                                <select id="devLedgerFilterType">
-                                    <option value="today" selected>Today</option>
-                                    <option value="month">Month</option>
-                                    <option value="year">Year</option>
-                                    <option value="date">Date</option>
-                                    <option value="range">Range</option>
-                                    <option value="all">All</option>
-                                </select>
-                            </div>
-                            <div class="filter-bar-group hidden" id="devLedgerMonthRow">
-                                <input type="month" id="devLedgerMonth" title="Month">
-                            </div>
-                            <div class="filter-bar-group hidden" id="devLedgerYearRow">
-                                <input type="number" id="devLedgerYear" min="2020" max="2099" step="1" placeholder="Year">
-                            </div>
-                            <div class="filter-bar-group hidden" id="devLedgerDateRow">
-                                <input type="date" id="devLedgerDate" title="Date">
-                            </div>
-                            <div class="filter-bar-group filter-range hidden" id="devLedgerRangeRow">
-                                <input type="date" id="devLedgerFrom" title="From">
-                                <span class="filter-sep">–</span>
-                                <input type="date" id="devLedgerTo" title="To">
-                            </div>
-                            <div class="filter-bar-group">
-                                <label for="devDesignerFilter">Designer</label>
-                                <select id="devDesignerFilter"><option value="all">All</option></select>
-                            </div>
+                    <h2>Complete Bill Database</h2>
+                    <div class="table-header-filters">
+                        <div class="search-bar-wrapper">
+                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            <input type="text" class="search-input-full" id="devLedgerSearch" placeholder="Search by bill no, description, designer..." autocomplete="off">
+                            <div class="search-suggestions" id="devLedgerSuggestions"></div>
+                        </div>
+                        <div class="filter-quick-btns">
+                            <button type="button" class="filter-quick-btn active" data-dev-ledger-filter="today" id="devLedgerTodayBtn">Today</button>
+                            <button type="button" class="filter-quick-btn" data-dev-ledger-filter="month" id="devLedgerMonthBtn">This Month</button>
+                            <button type="button" class="filter-quick-btn" data-dev-ledger-filter="all" id="devLedgerAllBtn">All</button>
+                        </div>
+                        <div class="filter-bar-group">
+                            <label for="devLedgerFilterType">Period</label>
+                            <select id="devLedgerFilterType">
+                                <option value="today" selected>Today</option>
+                                <option value="month">Month</option>
+                                <option value="year">Year</option>
+                                <option value="date">Date</option>
+                                <option value="range">Range</option>
+                                <option value="all">All</option>
+                            </select>
+                        </div>
+                        <div class="filter-bar-group hidden" id="devLedgerMonthRow">
+                            <input type="month" id="devLedgerMonth" title="Month">
+                        </div>
+                        <div class="filter-bar-group hidden" id="devLedgerYearRow">
+                            <input type="number" id="devLedgerYear" min="2020" max="2099" step="1" placeholder="Year">
+                        </div>
+                        <div class="filter-bar-group hidden" id="devLedgerDateRow">
+                            <input type="date" id="devLedgerDate" title="Date">
+                        </div>
+                        <div class="filter-bar-group filter-range hidden" id="devLedgerRangeRow">
+                            <input type="date" id="devLedgerFrom" title="From">
+                            <span class="filter-sep">–</span>
+                            <input type="date" id="devLedgerTo" title="To">
+                        </div>
+                        <div class="filter-bar-group">
+                            <label for="devDesignerFilter">Designer</label>
+                            <select id="devDesignerFilter"><option value="all">All</option></select>
                         </div>
                     </div>
-                    <div class="dev-bulk-bar" id="devBulkBar">
-                        <label class="dev-select-all-label">
-                            <input type="checkbox" id="devSelectAllBills"> Select all on page
-                        </label>
-                        <span class="dev-selected-count" id="devSelectedCount">0 selected</span>
-                        <button type="button" class="btn-danger-solid btn-sm" id="devDeleteSelectedBtn" disabled>Delete Selected</button>
-                        <button type="button" class="btn-ghost btn-sm" id="devClearSelectionBtn">Clear</button>
-                    </div>
-                    <div class="table-scroll-area dev-table-scroll">
-                        <table class="fit-table admin-ledger-table dev-bills-table">
-                            <thead><tr>
-                                <th class="col-check"><input type="checkbox" id="devSelectAllHeader" title="Select all"></th>
-                                <th>Date</th><th>Bill No</th><th>Designer</th><th>Description</th><th>Price</th><th>Design</th><th class="col-total">Total</th><th class="col-updated">Last Update</th><th class="col-status">Status</th><th class="col-actions">Actions</th>
-                            </tr></thead>
-                            <tbody id="devBillsBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="table-footer-bar">
-                        <span class="footer-label">Grand Total</span>
-                        <span class="footer-total" id="devTableTotal">Rs. 0.00</span>
-                    </div>
+                </div>
+                <div class="dev-bulk-bar" id="devBulkBar">
+                    <label class="dev-select-all-label">
+                        <input type="checkbox" id="devSelectAllBills"> Select all on page
+                    </label>
+                    <span class="dev-selected-count" id="devSelectedCount">0 selected</span>
+                    <button type="button" class="btn-danger-solid btn-sm" id="devDeleteSelectedBtn" disabled>Delete Selected</button>
+                    <button type="button" class="btn-ghost btn-sm" id="devClearSelectionBtn">Clear</button>
+                </div>
+                <div class="table-scroll-area dev-table-scroll">
+                    <table class="fit-table admin-ledger-table dev-bills-table">
+                        <thead><tr>
+                            <th class="col-check"><input type="checkbox" id="devSelectAllHeader" title="Select all"></th>
+                            <th>Date</th><th>Bill No</th><th>Designer</th><th>Description</th><th>Price</th><th>Design</th><th class="col-total">Total</th><th class="col-updated">Last Update</th><th class="col-status">Status</th><th class="col-actions">Actions</th>
+                        </tr></thead>
+                        <tbody id="devBillsBody"></tbody>
+                    </table>
+                </div>
+                <div class="table-footer-bar">
+                    <span class="footer-label">Grand Total</span>
+                    <span class="footer-total" id="devTableTotal">Rs. 0.00</span>
                 </div>
             </div>
 
@@ -809,6 +804,21 @@
             </div>
 
             <div id="devStoragePanel" class="admin-tab-panel monitor-panel">
+                <div class="dashboard-stats-block">
+                    <h1 class="dashboard-main-title">Complete Bill Database</h1>
+                    <div class="dashboard-stats-grid">
+                        <div class="stat-card purple-accent">
+                            <div class="stat-label">System Revenue</div>
+                            <div class="stat-value" id="devTotalRevenue">Rs. 0.00</div>
+                            <div class="stat-sub" id="devBillCount">0 bills recorded</div>
+                        </div>
+                        <div class="stat-card green-accent">
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-value" id="devUserCount" style="color:var(--green);">0</div>
+                            <div class="stat-sub">Full data control</div>
+                        </div>
+                    </div>
+                </div>
                 <div class="monitor-board">
                     <header class="monitor-header">
                         <div class="monitor-header-left">
