@@ -1546,24 +1546,135 @@ function renderDevNetworkMetric(state, badgeId = "devMetricNetworkBadge", labelI
     if (label) label.textContent = text;
 }
 
+// Interactive single stacked-bar chart for the Dev "Data Breakdown" card.
+// Segments can be selected (pops OUT in front, not hidden under the bar),
+// deselected, and deleted (removed from the bar). State survives the 2s
+// monitor refresh because it lives outside the render function.
+const devChartState = {
+    selected: new Set(),   // keys currently highlighted
+    hidden: new Set()      // keys deleted / removed from the bar
+};
+
+function devChartItems(stats) {
+    return [
+        { key: "bills", label: "Bills Data", bytes: stats.billsBytes, color: "#ff5252" },
+        { key: "users", label: "Users Data", bytes: stats.usersBytes, color: "#00e676" },
+        { key: "pending", label: "Pending Sync", bytes: stats.pendingBytes, color: "#ffab00" },
+        { key: "local", label: "Local Cache", bytes: stats.localBytes, color: "#448aff" }
+    ];
+}
+
 function renderDevAnalyzeChart(stats) {
     const el = document.getElementById("devAnalyzeChart");
     if (!el) return;
-    const total = stats.billsBytes + stats.usersBytes + stats.pendingBytes + stats.localBytes || 1;
-    const items = [
-        { label: "Bills Data", bytes: stats.billsBytes, color: "#ff5252" },
-        { label: "Users Data", bytes: stats.usersBytes, color: "#00e676" },
-        { label: "Pending Sync", bytes: stats.pendingBytes, color: "#ffab00" },
-        { label: "Local Cache", bytes: stats.localBytes, color: "#448aff" }
-    ];
-    el.innerHTML = items.map((i) => {
-        const pct = Math.max(2, (i.bytes / total) * 100);
-        return `<div class="analyze-row">
-            <span class="analyze-label">${i.label}</span>
-            <div class="analyze-bar-track"><div class="analyze-bar-fill" style="width:${pct.toFixed(1)}%;background:${i.color}"></div></div>
-            <span class="analyze-val">${formatBytes(i.bytes)}</span>
+    const all = devChartItems(stats);
+    const grandTotal = all.reduce((s, i) => s + i.bytes, 0) || 1;
+    const visible = all.filter((i) => !devChartState.hidden.has(i.key));
+    const total = visible.reduce((s, i) => s + i.bytes, 0) || 1;
+
+    // --- stacked bar segments (with callouts positioned in front) ---
+    let bar = "";
+    let callouts = "";
+    let running = 0;
+    visible.forEach((i) => {
+        const w = (i.bytes / total) * 100;
+        const sel = devChartState.selected.has(i.key);
+        const pct = (i.bytes / grandTotal) * 100;
+        const center = running + w / 2;
+        running += w;
+        bar += `<div class="dev-stackbar-seg ${sel ? "selected" : ""}" data-key="${i.key}"
+            style="width:${w.toFixed(3)}%;background:${i.color}" title="${i.label} — ${formatBytes(i.bytes)} (${pct.toFixed(1)}%)">
+            <span class="seg-pct">${w >= 6 ? Math.round(pct) + "%" : ""}</span>
+        </div>`;
+        if (sel) {
+            callouts += `<div class="callout-item on" style="left:${center.toFixed(2)}%">
+                <span class="callout-dot" style="background:${i.color}"></span>
+                <span class="callout-name">${i.label}</span>
+                <span class="callout-val">${formatBytes(i.bytes)}</span>
+                <span class="callout-pct">${pct.toFixed(1)}%</span>
+            </div>`;
+        }
+    });
+
+    // --- clickable legend rows ---
+    const legend = all.map((i) => {
+        const sel = devChartState.selected.has(i.key);
+        const removed = devChartState.hidden.has(i.key);
+        const pct = (i.bytes / grandTotal) * 100;
+        return `<div class="dev-chart-legend-row ${sel ? "selected" : ""} ${removed ? "removed" : ""}" data-key="${i.key}">
+            <span class="legend-dot" style="background:${i.color}"></span>
+            <span class="legend-name">${i.label}</span>
+            <span class="legend-val">${formatBytes(i.bytes)}</span>
+            <span class="legend-pct">${removed ? "removed" : pct.toFixed(1) + "%"}</span>
         </div>`;
     }).join("");
+
+    const anyVisible = visible.length > 0;
+    const selectedCount = [...devChartState.selected].filter((k) => !devChartState.hidden.has(k)).length;
+
+    const barHtml = anyVisible
+        ? `<div class="dev-chart-callouts">${callouts}</div>
+           <div class="dev-stackbar">${bar}</div>`
+        : `<div class="dev-chart-empty">All segments removed — press <strong>Reset</strong> to restore.</div>`;
+
+    el.innerHTML = `
+        <div class="dev-chart-head">
+            <span class="dev-chart-title">Storage Distribution</span>
+            <span class="dev-chart-total">Total <strong>${formatBytes(grandTotal)}</strong></span>
+        </div>
+        ${barHtml}
+        <div class="dev-chart-legend">${legend}</div>
+        <div class="dev-chart-actions">
+            <button type="button" class="dev-chart-action primary" data-chart-action="delete" ${selectedCount ? "" : "disabled"}>Delete Selected (${selectedCount})</button>
+            <button type="button" class="dev-chart-action" data-chart-action="deselect">Deselect</button>
+            <button type="button" class="dev-chart-action" data-chart-action="select-all">Select All</button>
+            <button type="button" class="dev-chart-action danger" data-chart-action="reset">Reset</button>
+        </div>
+        <p class="dev-chart-tip">Click a segment or legend row to select it (it pops out in front). Select several, then <strong>Delete Selected</strong> to hide them from the bar, <strong>Deselect</strong> to un-highlight, or <strong>Reset</strong> to bring everything back.</p>
+    `;
+    if (!el.dataset.bound) {
+        el.dataset.bound = "1";
+        el.addEventListener("click", handleDevChartClick);
+    }
+}
+
+function handleDevChartClick(e) {
+    // segment or legend row click -> toggle selection (pop to front)
+    const seg = e.target.closest(".dev-stackbar-seg, .dev-chart-legend-row");
+    if (seg && seg.dataset.key) {
+        const key = seg.dataset.key;
+        if (devChartState.hidden.has(key)) {
+            // clicking a removed legend row restores it
+            devChartState.hidden.delete(key);
+        } else if (devChartState.selected.has(key)) {
+            devChartState.selected.delete(key);
+        } else {
+            devChartState.selected.add(key);
+        }
+        refreshMonitorBoard();
+        return;
+    }
+    const btn = e.target.closest("[data-chart-action]");
+    if (!btn) return;
+    const action = btn.dataset.chartAction;
+    if (action === "select-all") {
+        devChartItems(getLastMonitorStats()).forEach((i) => {
+            if (!devChartState.hidden.has(i.key)) devChartState.selected.add(i.key);
+        });
+    } else if (action === "deselect") {
+        devChartState.selected.clear();
+    } else if (action === "delete") {
+        devChartState.selected.forEach((k) => devChartState.hidden.add(k));
+        devChartState.selected.clear();
+    } else if (action === "reset") {
+        devChartState.selected.clear();
+        devChartState.hidden.clear();
+    }
+    refreshMonitorBoard();
+}
+
+function getLastMonitorStats() {
+    return computeStorageStats();
 }
 
 function renderMonitorSessions() {
