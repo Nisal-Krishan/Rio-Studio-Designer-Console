@@ -1537,8 +1537,16 @@ tfoot th {
 .dev-bills-table th:nth-child(9),
 .dev-bills-table td:nth-child(9) { width: 10%; }
 
+.dev-bills-table th.col-updated,
+.dev-bills-table td.col-updated { width: 11%; min-width: 88px; }
+
 .dev-bills-table th.col-status,
 .dev-bills-table td:nth-child(10) { width: 8%; }
+
+.dev-bills-table td.col-updated {
+    font-size: 12px;
+    color: var(--text-muted);
+}
 
 .dev-bills-table th.col-actions,
 .dev-bills-table td.col-actions {
