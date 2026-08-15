@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Panel Preview — Stacked Bar Chart</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background:#0a0a0a; color:#fff; font-family:'Inter',system-ui,sans-serif; min-height:100vh; }
+        .preview-head { padding:22px 26px 6px; }
+        .preview-head h1 { font-size:20px; font-weight:900; }
+        .preview-head p { color:#888; font-size:13px; margin-top:4px; max-width:820px; line-height:1.5; }
+        .preview-body { padding:18px 26px 40px; max-width:860px; }
+        /* minimal version of the card the chart lives in */
+        .preview-card {
+            background:#151515; border:1px solid rgba(255,255,255,.08);
+            border-radius:12px; padding:14px 16px; margin-top:14px;
+        }
+        .preview-card .card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+        .preview-card .card-head h2 { font-size:14px; font-weight:800; margin:0; }
+        .preview-card .card-head .btn-ghost { background:#222; color:#ccc; border:1px solid rgba(255,255,255,.08); font:inherit; font-size:11px; font-weight:700; padding:6px 11px; border-radius:8px; cursor:pointer; }
+        .app-section { display:flex; position:relative; height:auto; padding-bottom:0; }
+        .admin-panel-content { flex:1; padding:14px 16px 16px; overflow:auto; display:flex; flex-direction:column; min-height:0; background:var(--bg); }
+        .monitor-board { display:flex; flex-direction:column; gap:12px; padding:12px 14px 14px; overflow-y:auto; }
+        .tab-note { font-size:12px; color:#999; margin:18px 0 6px; font-weight:700; text-transform:uppercase; letter-spacing:1px; }
+    </style>
+</head>
+<body>
+    <div class="preview-head">
+        <h1>Dev Panel — Preview</h1>
+        <p>This shows the two fixes: the <strong>Data Breakdown</strong> card now uses a single interactive stacked bar (click a segment or legend row to select it — it pops <em>out in front</em>, select several, then Delete Selected / Deselect / Reset), and the <strong>Dev Panel tabs</strong> are clearly readable with a purple accent instead of flat black.</p>
+    </div>
+
+    <!-- Dev navbar with styled tabs -->
+    <nav class="navbar dev-navbar">
+        <div class="logo">rio<span class="accent">studio</span><span class="badge dev-badge">DEV PANEL</span></div>
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-dev-tab="devBillsPanel">All Data / Bills</button>
+            <button class="nav-tab" data-dev-tab="devStoragePanel">Dashboard &amp; Logs</button>
+            <button class="nav-tab" data-dev-tab="devUsersPanel">All Users</button>
+        </div>
+        <div class="nav-right">
+            <div class="dev-name-tag">Nisal_Krishan</div>
+        </div>
+    </nav>
+
+    <div class="preview-body">
+        <div class="tab-note">Dashboard &amp; Logs → Data Breakdown card (new chart)</div>
+        <div class="monitor-board" style="border:1px solid rgba(255,255,255,.06); border-radius:12px;">
+            <div class="monitor-card monitor-breakdown-card">
+                <div class="monitor-card-head">
+                    <h2>Data Breakdown</h2>
+                    <button type="button" class="btn-ghost btn-sm">Refresh</button>
+                </div>
+                <div class="analyze-chart" id="devAnalyzeChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── Mirror of the app's renderDevAnalyzeChart + interactions ──
+        const formatBytes = (b) => { const n = Math.max(0, b || 0); if (n < 1024) return n + " B"; if (n < 1024 * 1024) return (n / 1024).toFixed(2) + " KB"; return (n / (1024 * 1024)).toFixed(2) + " MB"; };
+        const devChartState = { selected: new Set(), hidden: new Set() };
+        const sampleStats = { billsBytes: 1_200_000, usersBytes: 480_000, pendingBytes: 300_000, localBytes: 640_000 };
+        function devChartItems(stats){ return [
+            { key:"bills", label:"Bills Data", bytes:stats.billsBytes, color:"#ff5252" },
+            { key:"users", label:"Users Data", bytes:stats.usersBytes, color:"#00e676" },
+            { key:"pending", label:"Pending Sync", bytes:stats.pendingBytes, color:"#ffab00" },
+            { key:"local", label:"Local Cache", bytes:stats.localBytes, color:"#448aff" }
+        ];}
+        function refreshMonitorBoard(){ renderDevAnalyzeChart(sampleStats); }
+        function renderDevAnalyzeChart(stats){
+            const el = document.getElementById("devAnalyzeChart"); if(!el) return;
+            const all = devChartItems(stats);
+            const grandTotal = all.reduce((s,i)=>s+i.bytes,0)||1;
+            const visible = all.filter(i=>!devChartState.hidden.has(i.key));
+            const total = visible.reduce((s,i)=>s+i.bytes,0)||1;
+            let bar="", callouts="", running=0;
+            visible.forEach(i=>{
+                const w=(i.bytes/total)*100, sel=devChartState.selected.has(i.key);
+                const pct=(i.bytes/grandTotal)*100, center=running+w/2; running+=w;
+                bar += `<div class="dev-stackbar-seg ${sel?"selected":""}" data-key="${i.key}" style="width:${w.toFixed(3)}%;background:${i.color}" title="${i.label} — ${formatBytes(i.bytes)} (${pct.toFixed(1)}%)"><span class="seg-pct">${w>=6?Math.round(pct)+"%":""}</span></div>`;
+                if(sel){ callouts += `<div class="callout-item on" style="left:${center.toFixed(2)}%"><span class="callout-dot" style="background:${i.color}"></span><span class="callout-name">${i.label}</span><span class="callout-val">${formatBytes(i.bytes)}</span><span class="callout-pct">${pct.toFixed(1)}%</span></div>`; }
+            });
+            const legend = all.map(i=>{ const sel=devChartState.selected.has(i.key), rem=devChartState.hidden.has(i.key); const pct=(i.bytes/grandTotal)*100;
+                return `<div class="dev-chart-legend-row ${sel?"selected":""} ${rem?"removed":""}" data-key="${i.key}"><span class="legend-dot" style="background:${i.color}"></span><span class="legend-name">${i.label}</span><span class="legend-val">${formatBytes(i.bytes)}</span><span class="legend-pct">${rem?"removed":pct.toFixed(1)+"%"}</span></div>`; }).join("");
+            const anyVisible=visible.length>0;
+            const selectedCount=[...devChartState.selected].filter(k=>!devChartState.hidden.has(k)).length;
+            const barHtml = anyVisible ? `<div class="dev-chart-callouts">${callouts}</div><div class="dev-stackbar">${bar}</div>`
+                : `<div class="dev-chart-empty">All segments removed — press <strong>Reset</strong> to restore.</div>`;
+            el.innerHTML = `
+                <div class="dev-chart-head"><span class="dev-chart-title">Storage Distribution</span><span class="dev-chart-total">Total <strong>${formatBytes(grandTotal)}</strong></span></div>
+                ${barHtml}
+                <div class="dev-chart-legend">${legend}</div>
+                <div class="dev-chart-actions">
+                    <button type="button" class="dev-chart-action primary" data-chart-action="delete" ${selectedCount?"":"disabled"}>Delete Selected (${selectedCount})</button>
+                    <button type="button" class="dev-chart-action" data-chart-action="deselect">Deselect</button>
+                    <button type="button" class="dev-chart-action" data-chart-action="select-all">Select All</button>
+                    <button type="button" class="dev-chart-action danger" data-chart-action="reset">Reset</button>
+                </div>
+                <p class="dev-chart-tip">Click a segment or legend row to select it (it pops out in front). Select several, then <strong>Delete Selected</strong> to hide them from the bar, <strong>Deselect</strong> to un-highlight, or <strong>Reset</strong> to bring everything back.</p>`;
+            if(!el.dataset.bound){ el.dataset.bound="1"; el.addEventListener("click",(e)=>{
+                const seg=e.target.closest(".dev-stackbar-seg, .dev-chart-legend-row");
+                if(seg&&seg.dataset.key){ const k=seg.dataset.key;
+                    if(devChartState.hidden.has(k)) devChartState.hidden.delete(k);
+                    else if(devChartState.selected.has(k)) devChartState.selected.delete(k);
+                    else devChartState.selected.add(k);
+                    refreshMonitorBoard(); return; }
+                const btn=e.target.closest("[data-chart-action]"); if(!btn) return;
+                const a=btn.dataset.chartAction;
+                if(a==="select-all") devChartItems(sampleStats).forEach(i=>{ if(!devChartState.hidden.has(i.key)) devChartState.selected.add(i.key); });
+                else if(a==="deselect") devChartState.selected.clear();
+                else if(a==="delete"){ devChartState.selected.forEach(k=>devChartState.hidden.add(k)); devChartState.selected.clear(); }
+                else if(a==="reset"){ devChartState.selected.clear(); devChartState.hidden.clear(); }
+                refreshMonitorBoard();
+            }); }
+        }
+        renderDevAnalyzeChart(sampleStats);
+    </script>
+</body>
+</html>
