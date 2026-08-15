@@ -3247,6 +3247,21 @@ function printReport(title, totalAmount, subtitle = "") {
         activeConfig = config;
     }
 
+    function handleSearchClick(input, config) {
+        activeConfig = config;
+        const query = input.value.trim();
+        if (query.length >= 2) {
+            showSuggestionsForInput(input, config);
+        } else if (query.length > 0 && query.length < 2) {
+            // Show hint for minimum characters
+            const container = document.getElementById(config.suggestionsId);
+            if (container) {
+                container.innerHTML = '<div class="search-suggestion-item" style="cursor: default;"><div class="suggestion-main">Enter at least 2 characters</div></div>';
+                container.classList.add('active');
+            }
+        }
+    }
+
     function scrollToBill(billId) {
         const row = document.querySelector(`tr[data-bill-id="${billId}"]`);
         if (row) {
@@ -3260,6 +3275,12 @@ function printReport(title, totalAmount, subtitle = "") {
     SEARCH_CONFIGS.forEach(config => {
         const input = document.getElementById(config.inputId);
         if (!input) return;
+
+        // Add click event to show suggestions when clicking the search bar
+        input.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleSearchClick(input, config);
+        });
 
         input.addEventListener('input', (e) => {
             showSuggestionsForInput(input, config);
@@ -3333,4 +3354,160 @@ function printReport(title, totalAmount, subtitle = "") {
     closeBtn?.addEventListener("click", closePatchNotes);
     closeBtnFooter?.addEventListener("click", closePatchNotes);
     modal.addEventListener("click", (e) => { if (e.target === modal) closePatchNotes(); });
+})();
+
+/* ─── Chat System (Designer <-> Dev) ─── */
+(function initChatSystem() {
+    const chatModal = document.getElementById("chatModal");
+    const designerChatToggleBtn = document.getElementById("designerChatToggleBtn");
+    const devChatToggleBtn = document.getElementById("devChatToggleBtn");
+    const chatModalClose = document.getElementById("chatModalClose");
+    const chatMessagesContainer = document.getElementById("chatMessagesContainer");
+    const chatMessageInput = document.getElementById("chatMessageInput");
+    const chatSendBtn = document.getElementById("chatSendBtn");
+    const designerChatBadge = document.getElementById("designerChatBadge");
+    const devChatBadge = document.getElementById("devChatBadge");
+    
+    if (!chatModal || !chatMessageInput) return;
+    
+    const CHAT_LS_KEY = "rio_chat_messages";
+    let unreadCount = { designer: 0, dev: 0 };
+    
+    function getChatMessages() {
+        try {
+            const msgs = localStorage.getItem(CHAT_LS_KEY);
+            return msgs ? JSON.parse(msgs) : [];
+        } catch { return []; }
+    }
+    
+    function saveChatMessages(messages) {
+        try {
+            localStorage.setItem(CHAT_LS_KEY, JSON.stringify(messages));
+        } catch { /* ignore */ }
+    }
+    
+    function formatTime(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    function renderMessages() {
+        const messages = getChatMessages();
+        const isDev = currentUser?.role === 'developer';
+        
+        if (messages.length === 0) {
+            chatMessagesContainer.innerHTML = `
+                <div class="chat-welcome-message">
+                    <p>Welcome to the chat! Messages are visible to all designers and the developer.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        chatMessagesContainer.innerHTML = messages.map(msg => {
+            const isSent = msg.sender === currentUser?.username;
+            const senderClass = isSent ? 'sent' : 'received';
+            const senderName = msg.role === 'developer' ? 'Dev' : msg.sender;
+            
+            return `
+                <div class="chat-message ${senderClass}">
+                    ${!isSent ? `<div class="chat-message-sender">${senderName}</div>` : ''}
+                    <div class="chat-message-bubble">${escapeHtml(msg.text)}</div>
+                    <div class="chat-message-meta">${formatTime(msg.timestamp)}</div>
+                </div>
+            `;
+        }).join('');
+        
+        // Scroll to bottom
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function sendMessage() {
+        const text = chatMessageInput.value.trim();
+        if (!text || !currentUser) return;
+        
+        const messages = getChatMessages();
+        const newMessage = {
+            id: Date.now().toString(),
+            sender: currentUser.username,
+            role: currentUser.role,
+            text: text,
+            timestamp: Date.now()
+        };
+        
+        messages.push(newMessage);
+        saveChatMessages(messages);
+        chatMessageInput.value = '';
+        renderMessages();
+        
+        // Update badges for other users
+        if (currentUser.role === 'designer') {
+            unreadCount.dev = (unreadCount.dev || 0) + 1;
+            updateBadge(devChatBadge, unreadCount.dev);
+        } else if (currentUser.role === 'developer') {
+            unreadCount.designer = (unreadCount.designer || 0) + 1;
+            updateBadge(designerChatBadge, unreadCount.designer);
+        }
+    }
+    
+    function updateBadge(badgeElement, count) {
+        if (!badgeElement) return;
+        if (count > 0) {
+            badgeElement.textContent = count > 99 ? '99+' : count;
+            badgeElement.classList.remove('hidden');
+        } else {
+            badgeElement.classList.add('hidden');
+        }
+    }
+    
+    function openChat() {
+        chatModal.classList.remove('hidden');
+        renderMessages();
+        chatMessageInput.focus();
+        
+        // Clear unread count for current user
+        if (currentUser?.role === 'designer') {
+            unreadCount.designer = 0;
+            updateBadge(designerChatBadge, 0);
+        } else if (currentUser?.role === 'developer') {
+            unreadCount.dev = 0;
+            updateBadge(devChatBadge, 0);
+        }
+    }
+    
+    function closeChat() {
+        chatModal.classList.add('hidden');
+    }
+    
+    // Event listeners
+    if (designerChatToggleBtn && currentUser?.role === 'designer') {
+        designerChatToggleBtn.addEventListener('click', openChat);
+    }
+    
+    if (devChatToggleBtn && currentUser?.role === 'developer') {
+        devChatToggleBtn.addEventListener('click', openChat);
+    }
+    
+    chatModalClose?.addEventListener('click', closeChat);
+    chatSendBtn?.addEventListener('click', sendMessage);
+    
+    chatMessageInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    chatModal?.addEventListener('click', (e) => {
+        if (e.target === chatModal) closeChat();
+    });
+    
+    // Initial render
+    renderMessages();
 })();

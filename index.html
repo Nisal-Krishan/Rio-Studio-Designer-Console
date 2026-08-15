@@ -177,6 +177,37 @@
         </div>
     </div>
 
+    <!-- Chat Modal (Designer <-> Dev) -->
+    <div id="chatModal" class="modal-overlay hidden">
+        <div class="chat-modal-card">
+            <div class="chat-modal-header">
+                <div class="chat-header-title">
+                    <svg class="chat-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <h3 id="chatModalTitle">Chat</h3>
+                </div>
+                <button type="button" class="modal-close" id="chatModalClose">&times;</button>
+            </div>
+            <div class="chat-modal-body">
+                <div class="chat-messages-container" id="chatMessagesContainer">
+                    <div class="chat-welcome-message">
+                        <p>Welcome to the chat! Messages are visible to all designers and the developer.</p>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatMessageInput" placeholder="Type your message..." maxlength="500" autocomplete="off">
+                    <button type="button" class="btn-chat-send" id="chatSendBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Full View Table Overlay -->
     <div id="fullViewModal" class="fullview-overlay hidden">
         <div class="fullview-panel">
@@ -491,6 +522,13 @@
                 <button type="button" class="btn-sync" id="designerSyncBtn" title="Update all data">
                     <span class="sync-icon">↻</span> Update <span id="designerPendingCount" class="pending-badge hidden">0</span>
                 </button>
+                <!-- Chat button for Designer-Dev communication -->
+                <button type="button" class="btn-chat-toggle" id="designerChatToggleBtn" title="Chat with Dev">
+                    <svg class="chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span class="chat-badge hidden" id="designerChatBadge">0</span>
+                </button>
                 <div class="user-chip">
                     <div class="user-avatar" id="designerAvatar">D</div>
                     <div class="user-info">
@@ -700,6 +738,13 @@
                     <div class="signal-bars" data-level="0"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
                 </div>
                 <button type="button" class="btn-sync" id="devSyncBtn" title="Update all data"><span class="sync-icon">↻</span> Update <span id="devPendingCount" class="pending-badge hidden">0</span></button>
+                <!-- Chat button for Dev-Designer communication -->
+                <button type="button" class="btn-chat-toggle" id="devChatToggleBtn" title="Chat with Designers">
+                    <svg class="chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span class="chat-badge hidden" id="devChatBadge">0</span>
+                </button>
                 <button class="btn-logout" id="devLogoutBtn">Logout</button>
             </div>
         </nav>

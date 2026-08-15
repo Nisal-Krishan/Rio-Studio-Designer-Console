@@ -1,9 +1,10 @@
 ```gitignore
-# Compiled and binary files
+# Compiled and build artifacts
 *.pyc
 __pycache__/
 *.o
 *.obj
+*.class
 *.exe
 *.dll
 *.so
@@ -16,46 +17,36 @@ venv/
 .venv/
 .env
 .env.local
-*.env.*
+.env.*
 
-# Build artifacts
-dist/
-build/
-target/
-
-# Editor/IDE files
-.vscode/
-.idea/
+# Logs and temp files
+*.log
+*.tmp
 *.swp
 *.swo
-*.tmp
 
-# Logs
-*.log
+# Editors
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
 
 # Coverage
 coverage/
 htmlcov/
 .coverage
 
-# System files
-.DS_Store
-Thumbs.db
-
-# Python specific
-*.pyc
-__pycache__/
-.mypy_cache/
-.pytest_cache/
-
-# Java specific
-*.class
+# Build directories
+dist/
+build/
+target/
 .gradle/
 
-# JavaScript specific
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Python specific
+.mypy_cache/
+.pytest_cache/
 
 # Compressed files
 *.zip
