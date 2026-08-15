@@ -3131,17 +3131,23 @@ tfoot th {
     font-size: 13px;
     font-family: inherit;
     outline: none;
-    transition: var(--tr);
+    transition: all 0.2s ease;
 }
 
 .search-input-full:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent-glow);
+    box-shadow: 0 0 0 3px var(--accent-glow);
     background: #000;
+    transform: translateY(-1px);
 }
 
 .search-input-full::placeholder {
     color: var(--text-muted);
+    transition: opacity 0.2s ease;
+}
+
+.search-input-full:focus::placeholder {
+    opacity: 0.5;
 }
 
 .search-suggestions {
@@ -3154,20 +3160,46 @@ tfoot th {
     border-radius: var(--r-sm);
     box-shadow: var(--shadow);
     z-index: 100;
-    max-height: 280px;
+    max-height: 320px;
     overflow-y: auto;
     display: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
 }
 
 .search-suggestions.active {
     display: block;
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.search-suggestions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.search-suggestions::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
 }
 
 .search-suggestion-item {
     padding: 10px 14px;
     cursor: pointer;
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    transition: var(--tr);
+    transition: all 0.15s ease;
+    position: relative;
 }
 
 .search-suggestion-item:last-child {
@@ -3177,6 +3209,11 @@ tfoot th {
 .search-suggestion-item:hover,
 .search-suggestion-item.highlighted {
     background: var(--accent-bg);
+    padding-left: 18px;
+}
+
+.search-suggestion-item.highlighted {
+    border-left: 3px solid var(--accent);
 }
 
 .search-suggestion-item .suggestion-main {
@@ -3194,6 +3231,9 @@ tfoot th {
 .search-suggestion-item .suggestion-highlight {
     color: var(--accent-soft);
     font-weight: 700;
+    background: rgba(99, 102, 241, 0.1);
+    padding: 1px 3px;
+    border-radius: 2px;
 }
 
 /* ═══ EXPORT & REVIEW ═══ */
