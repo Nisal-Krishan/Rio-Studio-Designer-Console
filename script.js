@@ -3127,6 +3127,7 @@ function printReport(title, totalAmount, subtitle = "") {
 
     let highlightedIndex = -1;
     let currentSuggestions = [];
+    let activeConfig = null;
 
     function highlightText(text, query) {
         if (!query) return text;
@@ -3234,6 +3235,16 @@ function printReport(title, totalAmount, subtitle = "") {
         });
         highlightedIndex = -1;
         currentSuggestions = [];
+        activeConfig = null;
+    }
+
+    function showSuggestionsForInput(input, config) {
+        const query = input.value.trim();
+        const bills = config.getBills();
+        currentSuggestions = generateSuggestions(bills, query);
+        renderSuggestions(config.suggestionsId, currentSuggestions, query);
+        highlightedIndex = -1;
+        activeConfig = config;
     }
 
     function scrollToBill(billId) {
@@ -3251,34 +3262,29 @@ function printReport(title, totalAmount, subtitle = "") {
         if (!input) return;
 
         input.addEventListener('input', (e) => {
-            const query = e.target.value.trim();
-            const bills = config.getBills();
-            currentSuggestions = generateSuggestions(bills, query);
-            renderSuggestions(config.suggestionsId, currentSuggestions, query);
-            highlightedIndex = -1;
+            showSuggestionsForInput(input, config);
         });
 
         input.addEventListener('focus', () => {
+            activeConfig = config;
             const query = input.value.trim();
             if (query.length >= 2) {
-                const bills = config.getBills();
-                currentSuggestions = generateSuggestions(bills, query);
-                renderSuggestions(config.suggestionsId, currentSuggestions, query);
+                showSuggestionsForInput(input, config);
             }
         });
 
         input.addEventListener('keydown', (e) => {
-            if (!currentSuggestions.length) return;
+            if (!currentSuggestions.length || !activeConfig) return;
 
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 highlightedIndex = Math.min(highlightedIndex + 1, currentSuggestions.length - 1);
-                const container = document.getElementById(config.suggestionsId);
+                const container = document.getElementById(activeConfig.suggestionsId);
                 if (container) updateHighlight(container);
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 highlightedIndex = Math.max(highlightedIndex - 1, 0);
-                const container = document.getElementById(config.suggestionsId);
+                const container = document.getElementById(activeConfig.suggestionsId);
                 if (container) updateHighlight(container);
             } else if (e.key === 'Enter' && highlightedIndex >= 0) {
                 e.preventDefault();
