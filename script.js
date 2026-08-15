@@ -3131,10 +3131,92 @@ function printReport(title, totalAmount, subtitle = "") {
     let debounceTimer = null;
     const DEBOUNCE_DELAY = 150; // Optimize search with debounce
 
+    function normalizeText(text) {
+        // Remove diacritics and convert to lowercase for better matching
+        return text
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim();
+    }
+
+    function fuzzyMatch(text, query) {
+        // Windows Explorer style fuzzy search
+        const normalizedText = normalizeText(text);
+        const normalizedQuery = normalizeText(query);
+        
+        // Exact match (highest priority)
+        if (normalizedText === normalizedQuery) return { match: true, score: 100 };
+        
+        // Starts with query (high priority)
+        if (normalizedText.startsWith(normalizedQuery)) return { match: true, score: 90 };
+        
+        // Contains query (medium priority)
+        if (normalizedText.includes(normalizedQuery)) return { match: true, score: 80 };
+        
+        // Fuzzy match - check if all query characters appear in order
+        let queryIndex = 0;
+        let consecutiveMatches = 0;
+        let lastMatchIndex = -1;
+        
+        for (let i = 0; i < normalizedText.length && queryIndex < normalizedQuery.length; i++) {
+            if (normalizedText[i] === normalizedQuery[queryIndex]) {
+                if (lastMatchIndex === -1 || i === lastMatchIndex + 1) {
+                    consecutiveMatches++;
+                }
+                queryIndex++;
+                lastMatchIndex = i;
+            }
+        }
+        
+        if (queryIndex === normalizedQuery.length) {
+            // All characters found in order
+            const baseScore = 70;
+            const consecutiveBonus = (consecutiveMatches / normalizedQuery.length) * 20;
+            const lengthBonus = Math.max(0, 10 - (normalizedText.length - normalizedQuery.length));
+            return { match: true, score: baseScore + consecutiveBonus + lengthBonus };
+        }
+        
+        return { match: false, score: 0 };
+    }
+
     function highlightText(text, query) {
         if (!query) return text;
+        const normalizedText = normalizeText(text);
+        const normalizedQuery = normalizeText(query);
+        
+        // Try to find the query in the original text (case-insensitive)
         const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
-        return text.replace(regex, '<span class="suggestion-highlight">$1</span>');
+        if (regex.test(text)) {
+            return text.replace(regex, '<span class="suggestion-highlight">$1</span>');
+        }
+        
+        // If not found directly, try with normalized version
+        const normalizedRegex = new RegExp(`(${escapeRegExp(normalizedQuery)})`, 'gi');
+        let result = text;
+        let match;
+        const matches = [];
+        
+        while ((match = normalizedRegex.exec(normalizedText)) !== null) {
+            matches.push({
+                start: match.index,
+                end: match.index + match[0].length
+            });
+        }
+        
+        if (matches.length > 0) {
+            // Highlight based on character positions
+            let offset = 0;
+            matches.forEach(m => {
+                const before = result.substring(0, m.start + offset);
+                const highlighted = `<span class="suggestion-highlight">${result.substring(m.start + offset, m.end + offset)}</span>`;
+                const after = result.substring(m.end + offset);
+                result = before + highlighted + after;
+                offset += 38; // Length of span tags
+            });
+        }
+        
+        return result;
     }
 
     function escapeRegExp(string) {
@@ -3161,23 +3243,28 @@ function printReport(title, totalAmount, subtitle = "") {
     }
 
     function generateSuggestions(bills, query) {
-        if (!query || query.length < 2) return [];
-        const lowerQuery = query.toLowerCase();
+        if (!query || query.length < 1) return []; // Changed from 2 to 1 for better UX
+        
+        const normalizedQuery = normalizeText(query);
         const seen = new Set();
         const suggestions = [];
         const queryIsDateLike = /^\d{1,4}[-/]\d{1,2}[-/]\d{1,4}$/.test(query) || /^\d+$/.test(query);
 
         bills.forEach(bill => {
-            const billNo = (bill.billNo || '').toLowerCase();
-            const description = (bill.description || '').toLowerCase();
-            const designer = (bill.username || '').toLowerCase();
+            const billNo = bill.billNo || '';
+            const description = bill.description || '';
+            const designer = bill.username || '';
             const dateFormats = formatDateForSearch(bill.date);
+            
+            const normalizedBillNo = normalizeText(billNo);
+            const normalizedDescription = normalizeText(description);
+            const normalizedDesigner = normalizeText(designer);
 
             // Check for date match
             if (queryIsDateLike && !seen.has(bill.id)) {
                 const dateMatch = dateFormats.some(format => 
-                    format.toLowerCase().includes(lowerQuery) || 
-                    lowerQuery.includes(format.toLowerCase())
+                    normalizeText(format).includes(normalizedQuery) || 
+                    normalizedQuery.includes(normalizeText(format))
                 );
                 if (dateMatch) {
                     seen.add(bill.id);
@@ -3186,46 +3273,60 @@ function printReport(title, totalAmount, subtitle = "") {
                         main: `Bill No: ${bill.billNo}`,
                         sub: `${bill.description || 'No description'} • ${bill.date || ''}`,
                         type: 'date',
-                        bill: bill
+                        bill: bill,
+                        score: 85
                     });
                 }
             }
 
-            if (billNo.includes(lowerQuery) && !seen.has(bill.id)) {
+            // Use fuzzy matching for all fields
+            const billNoMatch = fuzzyMatch(normalizedBillNo, normalizedQuery);
+            const descMatch = fuzzyMatch(normalizedDescription, normalizedQuery);
+            const designerMatch = fuzzyMatch(normalizedDesigner, normalizedQuery);
+
+            if (billNoMatch.match && !seen.has(bill.id)) {
                 seen.add(bill.id);
                 suggestions.push({
                     id: bill.id,
                     main: `Bill No: ${bill.billNo}`,
                     sub: `${bill.description || 'No description'} • ${bill.date || ''}`,
                     type: 'billNo',
-                    bill: bill
+                    bill: bill,
+                    score: billNoMatch.score
                 });
             }
-            if (description.includes(lowerQuery) && !seen.has(bill.id)) {
+            
+            if (descMatch.match && !seen.has(bill.id)) {
                 seen.add(bill.id);
                 suggestions.push({
                     id: bill.id,
                     main: bill.billNo,
                     sub: `${bill.description} • Rs. ${bill.price?.toFixed(2) || '0.00'}`,
                     type: 'description',
-                    bill: bill
+                    bill: bill,
+                    score: descMatch.score
                 });
             }
-            if (designer.includes(lowerQuery) && !seen.has(bill.id)) {
+            
+            if (designerMatch.match && !seen.has(bill.id)) {
                 seen.add(bill.id);
                 suggestions.push({
                     id: bill.id,
                     main: `Designer: ${bill.username}`,
                     sub: `${bill.billNo} • ${bill.description || ''}`,
                     type: 'designer',
-                    bill: bill
+                    bill: bill,
+                    score: designerMatch.score
                 });
             }
 
-            if (suggestions.length >= 10) return suggestions;
+            if (suggestions.length >= 15) return suggestions; // Increased limit
         });
 
-        return suggestions.slice(0, 10);
+        // Sort by score (Windows Explorer style ranking)
+        suggestions.sort((a, b) => b.score - a.score);
+        
+        return suggestions.slice(0, 15);
     }
 
     function renderSuggestions(suggestionsId, suggestions, query) {
@@ -3291,13 +3392,13 @@ function printReport(title, totalAmount, subtitle = "") {
     function handleSearchClick(input, config) {
         activeConfig = config;
         const query = input.value.trim();
-        if (query.length >= 2) {
+        if (query.length >= 1) {
             showSuggestionsForInput(input, config);
-        } else if (query.length > 0 && query.length < 2) {
+        } else if (query.length > 0 && query.length < 1) {
             // Show hint for minimum characters
             const container = document.getElementById(config.suggestionsId);
             if (container) {
-                container.innerHTML = '<div class="search-suggestion-item" style="cursor: default;"><div class="suggestion-main">Enter at least 2 characters</div></div>';
+                container.innerHTML = '<div class="search-suggestion-item" style="cursor: default;"><div class="suggestion-main">Enter at least 1 character</div></div>';
                 container.classList.add('active');
             }
         }
@@ -3334,7 +3435,7 @@ function printReport(title, totalAmount, subtitle = "") {
         input.addEventListener('focus', () => {
             activeConfig = config;
             const query = input.value.trim();
-            if (query.length >= 2) {
+            if (query.length >= 1) {
                 showSuggestionsForInput(input, config);
             }
         });
