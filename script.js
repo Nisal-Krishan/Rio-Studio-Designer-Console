@@ -1433,22 +1433,74 @@ document.querySelectorAll("[data-admin-tab]").forEach((btn) => {
     });
 });
 
-document.querySelectorAll("[data-dev-tab]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-        document.querySelectorAll("[data-dev-tab]").forEach((b) => b.classList.toggle("active", b === btn));
-        document.querySelectorAll("#developerSection .admin-tab-panel").forEach((p) => p.classList.toggle("active", p.id === btn.dataset.devTab));
-        if (btn.dataset.devTab === "devStoragePanel") {
+/* ─── Robust Dev Panel Tab Switching (Black Screen Fix) ─── */
+function switchDevTab(tabId) {
+    try {
+        if (!tabId) return;
+        const developerEl = document.getElementById("developerSection");
+        if (!developerEl) return;
+
+        const tabs = developerEl.querySelectorAll("[data-dev-tab]");
+        const panels = developerEl.querySelectorAll(".admin-tab-panel");
+
+        tabs.forEach((b) => {
+            const isActive = (b.dataset.devTab === tabId);
+            b.classList.toggle("active", isActive);
+        });
+
+        panels.forEach((p) => {
+            const isActive = (p.id === tabId);
+            p.classList.toggle("active", isActive);
+            if (isActive) {
+                p.style.display = "flex";
+                p.style.visibility = "visible";
+                p.style.opacity = "1";
+                p.style.height = "auto";
+                p.style.pointerEvents = "auto";
+                p.style.overflow = "hidden";
+            } else {
+                p.style.display = "none";
+                p.style.visibility = "hidden";
+                p.style.opacity = "0";
+                p.style.height = "0";
+                p.style.pointerEvents = "none";
+                p.style.overflow = "hidden";
+            }
+        });
+
+        if (tabId === "devStoragePanel") {
             monitorBoardActive = true;
-            subscribeActiveSessions();
-            refreshMonitorBoard();
-            startStorageDashboardPolling();
-            startMonitorClock();
-            logMonitorEvent("system", "Monitor board opened");
+            try { subscribeActiveSessions(); } catch (e) { console.warn("subscribeActiveSessions failed", e); }
+            try { refreshMonitorBoard(); } catch (e) { console.warn("refreshMonitorBoard failed", e); }
+            try { startStorageDashboardPolling(); } catch (e) { console.warn("startStorageDashboardPolling failed", e); }
+            try { startMonitorClock(); } catch (e) { console.warn("startMonitorClock failed", e); }
+            try { loadDashboardData(); } catch (e) { console.warn("loadDashboardData failed", e); }
+            try { logMonitorEvent("system", "Dashboard opened"); } catch {}
         } else {
             monitorBoardActive = false;
-            stopStorageDashboardPolling();
-            stopMonitorClock();
+            try { stopStorageDashboardPolling(); } catch (e) {}
+            try { stopMonitorClock(); } catch (e) {}
         }
+
+        if (tabId === "devUsersPanel") {
+            try { loadUsersData(); } catch (e) { console.warn("loadUsersData failed", e); }
+        }
+
+        if (tabId === "devBillsPanel") {
+            try { refreshDevBillsView(); } catch (e) { console.warn("refreshDevBillsView failed", e); }
+        }
+
+    } catch (err) {
+        console.error("switchDevTab crashed:", err);
+        showToast("Tab switching error — reloading view", true);
+    }
+}
+
+document.querySelectorAll("[data-dev-tab]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const target = btn.dataset.devTab;
+        switchDevTab(target);
     });
 });
 
@@ -2940,28 +2992,53 @@ function closeDevPasswordModal() {
     document.getElementById("devPasswordModal").classList.add("hidden");
 }
 
+function getUserInitials(username) {
+    if (!username) return "?";
+    const clean = String(username).replace(/[^a-zA-Z0-9]/g, " ");
+    const parts = clean.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return username[0]?.toUpperCase() || "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 function renderDevUsers(users) {
     const tbody = document.getElementById("devUsersBody");
-    document.getElementById("devUserCount").textContent = users.length;
-    if (!users.length) { tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No users.</td></tr>`; return; }
+    const userCountEl = document.getElementById("devUserCount");
+    if (userCountEl) userCountEl.textContent = users.length;
+    if (!users.length) { if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No users yet. Use "Add New User" to create one.</td></tr>`; return; }
+    if (!tbody) return;
     tbody.innerHTML = users.map((u) => {
         const protected_ = u.role === "developer";
         const presence = getUserPresenceInfo(u);
+        const initials = getUserInitials(u.username);
         const pwCell = `<code class="dev-password-cell dev-pw-cell" data-id="${u.id}" data-name="${escAttr(u.username)}" title="Click to change password">${escAttr(u.password || "—")}</code>`;
         const isLoggedIn = !!activeSessionsMap[u.id];
         const actions = protected_
             ? `<span style="color:var(--text-muted);font-size:11px;">Protected</span>`
             : `<div class="btn-action-group">
-                <button type="button" class="btn-action dev-login-btn" data-id="${u.id}" data-name="${escAttr(u.username)}" data-role="${u.role}">Login As</button>
-                <button type="button" class="btn-action dev-force-logout-btn" data-id="${u.id}" data-name="${escAttr(u.username)}"${isLoggedIn ? "" : " disabled"}>Logout</button>
-                <button type="button" class="btn-action edit dev-pw-btn" data-id="${u.id}" data-name="${escAttr(u.username)}">Password</button>
-                <button type="button" class="btn-action delete dev-del-btn" data-id="${u.id}" data-name="${escAttr(u.username)}">Delete</button></div>`;
-        return `<tr><td><strong>${u.username}</strong></td>
+                <button type="button" class="btn-action edit dev-pw-btn" data-id="${u.id}" data-name="${escAttr(u.username)}" title="Change password">Reset PW</button>
+                <button type="button" class="btn-action delete dev-del-btn" data-id="${u.id}" data-name="${escAttr(u.username)}" title="Permanently delete user">Remove</button></div>`;
+        const fullActions = protected_
+            ? actions
+            : `<div class="btn-action-group">
+                <button type="button" class="btn-action dev-login-btn" data-id="${u.id}" data-name="${escAttr(u.username)}" data-role="${u.role}" title="Switch to this user account">Login As</button>
+                <button type="button" class="btn-action dev-force-logout-btn" data-id="${u.id}" data-name="${escAttr(u.username)}"${isLoggedIn ? "" : " disabled"} title="End remote sessions">Logout</button>
+                <button type="button" class="btn-action edit dev-pw-btn" data-id="${u.id}" data-name="${escAttr(u.username)}">Reset PW</button>
+                <button type="button" class="btn-action delete dev-del-btn" data-id="${u.id}" data-name="${escAttr(u.username)}">Remove</button></div>`;
+        return `<tr>
+            <td><div class="dev-user-avatar ${u.role || "designer"}" title="${escAttr(u.username)}">${initials}</div></td>
+            <td><div class="dev-user-cell">
+                <div class="dev-user-meta">
+                    <span class="uuname">${escAttr(u.username)}</span>
+                    <span class="uusub">ID: ${escAttr(u.id || u.username)}</span>
+                </div>
+            </div></td>
             <td><span class="role-badge ${u.role}">${u.role}</span></td>
+            <td class="session-time" title="${escAttr(formatSessionTime(u.lastSeen || (activeSessionsMap[u.id]?.loginTime)))}">${presence.lastSeen}</td>
             <td>${pwCell}</td>
             <td>${sessionStatusCell(presence)}</td>
-            <td class="session-time">${presence.lastSeen}</td>
-            <td>${actions}</td></tr>`;
+            <td>${fullActions}</td>
+        </tr>`;
     }).join("");
 
     tbody.querySelectorAll(".dev-login-btn").forEach((btn) => {
@@ -3126,6 +3203,295 @@ function maybeShowWelcomePatchNotes() {
         modal.classList.remove("hidden");
     }, 450);
 }
+
+/* ─── Lazy Loaders for Dev Panel (called by switchDevTab) ─── */
+let devUsersLoadedOnce = false;
+function loadUsersData() {
+    if (!devUsersLoadedOnce) {
+        try {
+            const cachedUsers = getCachedUsers();
+            renderDevUsers(cachedUsers);
+            devUsersLoadedOnce = true;
+        } catch (e) {
+            console.warn("loadUsersData failed:", e);
+            const tbody = document.getElementById("devUsersBody");
+            if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Failed to load users — please refresh</td></tr>`;
+        }
+    }
+    bindDevAddNewUserBtn();
+}
+
+let devDashLoadedOnce = false;
+function loadDashboardData() {
+    try {
+        const allBills = getAllDevBillsSnapshot();
+        updateDevSummaryCards(allBills);
+        renderDevActivityTimeline(allBills);
+        refreshDashOverviewKV();
+        devDashLoadedOnce = true;
+    } catch (e) {
+        console.warn("loadDashboardData failed:", e);
+        setDevCardFallbackText();
+    }
+}
+
+function getAllDevBillsSnapshot() {
+    try {
+        const key = LAST_CLOUD_BILLS_KEY || "lastCloudBills";
+        const cached = localStorage.getItem(key);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length) return parsed;
+            } catch {}
+        }
+    } catch {}
+    return (typeof getCachedBills === "function") ? (getCachedBills() || []) : [];
+}
+
+function setDevCardFallbackText() {
+    const rev = document.getElementById("devMonthlyRevenue");
+    if (rev) rev.textContent = "Calculating…";
+    const bills = document.getElementById("devTodayBills");
+    if (bills) bills.textContent = "—";
+    const des = document.getElementById("devTopDesigner");
+    if (des) des.textContent = "—";
+    const st = document.getElementById("devSyncStatusValue");
+    if (st) st.textContent = "Idle";
+}
+
+function isSameDay(ts1, ts2) {
+    const d1 = new Date(ts1), d2 = new Date(ts2);
+    return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
+}
+
+function isSameMonth(ts1, ts2) {
+    const d1 = new Date(ts1), d2 = new Date(ts2);
+    return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth();
+}
+
+function updateDevSummaryCards(bills) {
+    const billsArr = Array.isArray(bills) ? bills.filter(Boolean) : [];
+    const now = Date.now();
+    let monthRev = 0;
+    let todayCount = 0;
+    const billTotals = new Map();
+    const designerCounts = {};
+    let mostActiveName = "—";
+    let mostActiveCount = 0;
+
+    billsArr.forEach((b) => {
+        const ms = timestampToMs(b.createdAt || b.timestamp || 0);
+        if (!ms) return;
+        const designerName = b.designer || b.user || "Unknown";
+        let total = 0;
+        try { total = typeof billLineTotal === "function" ? billLineTotal(b) : (Number(b.total) || 0); } catch {}
+        billTotals.set(b.id || b.billNo || (b._id || "" + Math.random()), total);
+
+        if (isSameMonth(ms, now)) { monthRev += total; }
+        if (isSameDay(ms, now)) { todayCount++; }
+
+        designerCounts[designerName] = (designerCounts[designerName] || 0) + 1;
+    });
+
+    Object.entries(designerCounts).forEach(([name, cnt]) => {
+        if (cnt > mostActiveCount) { mostActiveCount = cnt; mostActiveName = name; }
+    });
+
+    const revEl = document.getElementById("devMonthlyRevenue");
+    if (revEl) revEl.textContent = (typeof formatMoney === "function") ? formatMoney(monthRev) : ("Rs. " + monthRev.toLocaleString());
+    const revSub = document.getElementById("devMonthlyRevenueSub");
+    if (revSub) revSub.textContent = new Date(now).toLocaleString("en-US", { month: "long", year: "numeric" });
+
+    const billsEl = document.getElementById("devTodayBills");
+    if (billsEl) billsEl.textContent = todayCount;
+    const billsSub = document.getElementById("devTodayBillsSub");
+    if (billsSub) billsSub.textContent = new Date(now).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+
+    const topEl = document.getElementById("devTopDesigner");
+    if (topEl) topEl.textContent = mostActiveName;
+    const topSub = document.getElementById("devTopDesignerSub");
+    if (topSub) topSub.textContent = mostActiveCount ? `${mostActiveCount} bills this month` : "No bills yet";
+
+    let pendingCount = 0;
+    try { pendingCount = (typeof getPendingCount === "function") ? getPendingCount() : 0; } catch {}
+    const statusPulse = document.getElementById("devSyncStatusPulse");
+    const statusEl = document.getElementById("devSyncStatusValue");
+    const statusSub = document.getElementById("devSyncStatusSub");
+    if (statusPulse) {
+        statusPulse.classList.remove("ps-green","ps-amber","ps-red");
+        if (pendingCount > 0) {
+            statusPulse.classList.add("ps-amber");
+            if (statusEl) statusEl.textContent = `${pendingCount} pending`;
+            if (statusSub) statusSub.textContent = "Syncing changes…";
+        } else if (!serverConnected) {
+            statusPulse.classList.add("ps-red");
+            if (statusEl) statusEl.textContent = "Offline";
+            if (statusSub) statusSub.textContent = "Waiting for network";
+        } else {
+            statusPulse.classList.add("ps-green");
+            if (statusEl) statusEl.textContent = "All Synced";
+            if (statusSub) statusSub.textContent = `Up to date · ${billsArr.length} total bills`;
+        }
+    }
+}
+
+function renderDevActivityTimeline(bills) {
+    const ul = document.getElementById("devActivityTimeline");
+    if (!ul) return;
+    const billsArr = Array.isArray(bills) ? bills.filter(Boolean) : [];
+    const activities = [];
+
+    billsArr.forEach((b) => {
+        const ms = timestampToMs(b.createdAt || b.timestamp || 0);
+        if (!ms) return;
+        const designerName = b.designer || b.user || "Unknown";
+        let total = 0;
+        try { total = typeof billLineTotal === "function" ? billLineTotal(b) : (Number(b.total) || 0); } catch {}
+        const billNo = b.billNo || b.invoiceNo || b.id || "—";
+        activities.push({
+            type: "bill", ms, raw: b,
+            designerName, billNo, total,
+            action: "added"
+        });
+    });
+
+    let monitorLogsArr = [];
+    try {
+        if (typeof getMonitorLogs === "function") monitorLogsArr = getMonitorLogs() || [];
+    } catch {}
+    monitorLogsArr.slice(-15).forEach((m) => {
+        activities.push({
+            type: m.type || "system",
+            ms: timestampToMs(m.timestamp || m.time || 0),
+            message: m.message || m.text || "",
+            user: m.user || m.by || "System"
+        });
+    });
+
+    activities.sort((a,b) => b.ms - a.ms);
+    const top = activities.slice(0, 25);
+
+    if (!top.length) {
+        ul.innerHTML = `<li class="dev-tl-item tl-system" style="padding-left:34px;"><div class="dev-tl-time">—</div><div class="dev-tl-msg"><span class="tl-tag system">EMPTY</span>No activity recorded yet. Generate bills to see activity here.</div></li>`;
+        return;
+    }
+
+    ul.innerHTML = top.map((a) => {
+        const timeTxt = a.ms ? new Date(a.ms).toLocaleTimeString("en-US", { hour12:false }) : "--:--:--";
+        const dateTxt = a.ms ? new Date(a.ms).toLocaleDateString("en-US", { month:"short", day:"numeric" }) : "";
+        let tagType = a.type || "system";
+        if (!["bill","user","sync","error","system"].includes(tagType)) tagType = "system";
+        let msg = "";
+        if (a.type === "bill") {
+            const moneyTxt = (typeof formatMoney === "function") ? formatMoney(a.total) : ("Rs. " + (a.total||0).toLocaleString());
+            msg = `<span class="tl-tag bill">BILL</span> <strong>${escAttr(a.designerName)}</strong> added bill <strong>${escAttr(a.billNo)}</strong> · ${moneyTxt}`;
+        } else {
+            const tagClass = tagType;
+            msg = `<span class="tl-tag ${tagClass}">${tagType.toUpperCase()}</span> <strong>${escAttr(a.user || "System")}</strong> ${escAttr(a.message || "")}`;
+        }
+        return `<li class="dev-tl-item tl-${tagType}">
+            <div class="dev-tl-time" title="${escAttr(dateTxt)} ${escAttr(timeTxt)}">${escAttr(timeTxt)}</div>
+            <div class="dev-tl-msg">${msg}</div>
+        </li>`;
+    }).join("");
+}
+
+function refreshDashOverviewKV() {
+    try {
+        const onlineEl = document.getElementById("devDashOnlineUsers");
+        if (onlineEl) onlineEl.textContent = Object.keys(activeSessionsMap || {}).length;
+
+        const totalBillsEl = document.getElementById("devDashTotalBills");
+        if (totalBillsEl) {
+            const allBills = getAllDevBillsSnapshot();
+            totalBillsEl.textContent = allBills.length;
+        }
+
+        const freshnessEl = document.getElementById("devDashLastUpdate");
+        if (freshnessEl) {
+            let t = 0;
+            try {
+                if (typeof lastSyncTime !== "undefined" && lastSyncTime) t = lastSyncTime;
+            } catch {}
+            try {
+                if (!t) t = localStorage.getItem(LAST_SYNC_KEY || "lastSync");
+                if (t) t = Number(t) || 0;
+            } catch {}
+            if (!t) t = (typeof appStartTime !== "undefined") ? appStartTime : Date.now();
+            freshnessEl.textContent = (typeof formatRelativeTime === "function") ? formatRelativeTime(t) : new Date(t).toLocaleString();
+        }
+    } catch (e) {
+        console.warn("refreshDashOverviewKV failed:", e);
+    }
+}
+
+/* ─── Dashboard UI Button Bindings ─── */
+let dashBindingsDone = false;
+function bindDevDashboardButtons() {
+    if (dashBindingsDone) return;
+
+    const refreshBtn = document.getElementById("devDashRefreshBtn");
+    if (refreshBtn) {
+        refreshBtn.addEventListener("click", () => {
+            try { refreshMonitorBoard(); } catch {}
+            loadDashboardData();
+            showToast("Dashboard refreshed");
+        });
+    }
+
+    const todayBtn = document.getElementById("devDashToday");
+    const monthBtn = document.getElementById("devDashMonth");
+    const allBtn = document.getElementById("devDashAll");
+    const designerSel = document.getElementById("devDashDesignerFilter");
+    const periodSel = document.getElementById("devDashPeriodFilter");
+    function reRunDash() {
+        try { loadDashboardData(); } catch {}
+    }
+    [todayBtn, monthBtn, allBtn].forEach((b) => { if (b) b.addEventListener("click", reRunDash); });
+    [designerSel, periodSel].forEach((s) => { if (s) s.addEventListener("change", reRunDash); });
+
+    const advToggle = document.getElementById("devToggleMonitorBtn");
+    const advWrap = document.getElementById("advMonitorWrap");
+    if (advToggle && advWrap) {
+        advToggle.addEventListener("click", () => {
+            const isHidden = advWrap.style.display === "none" || !advWrap.style.display;
+            if (isHidden) {
+                advWrap.style.display = "block";
+                advToggle.innerHTML = "▲ Hide Advanced System Monitor";
+                try { refreshMonitorBoard(); } catch {}
+            } else {
+                advWrap.style.display = "none";
+                advToggle.innerHTML = "▼ Show Advanced System Monitor";
+            }
+        });
+    }
+
+    dashBindingsDone = true;
+}
+
+let addUserBtnBound = false;
+function bindDevAddNewUserBtn() {
+    if (addUserBtnBound) return;
+    const btn = document.getElementById("devAddNewUserBtn");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+        const leftPanel = document.querySelector("#devUsersPanel .left-panel.dev-panel");
+        if (leftPanel) {
+            leftPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+            setTimeout(() => {
+                const firstField = document.getElementById("devNewUsername") || document.getElementById("devAddNewUsername");
+                if (firstField) try { firstField.focus(); } catch {}
+            }, 200);
+        }
+        showToast("Fill the form in the left panel to add a new user");
+    });
+    addUserBtnBound = true;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    try { bindDevDashboardButtons(); } catch (e) { console.warn("bindDevDashboardButtons failed", e); }
+});
 
 initApp();
 initDesignerCapsLock();

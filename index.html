@@ -785,16 +785,27 @@
                         </form>
                     </aside>
                     <main class="right-panel">
-                        <div class="table-container data-table-panel">
-                            <div class="table-header table-header-ledger">
+                        <div class="table-container data-table-panel" style="display:flex;flex-direction:column;min-height:0;">
+                            <div class="dev-users-header">
                                 <h2>All System Users</h2>
-                                <div class="table-header-filters">
+                                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                                    <button type="button" class="btn-add-user" id="devAddNewUserBtn">
+                                        <span class="plus">+</span> Add New User
+                                    </button>
                                     <button type="button" class="btn-danger-solid btn-sm" id="devLogoutAllBtn">Logout All Users</button>
                                 </div>
                             </div>
-                            <div class="table-scroll-area">
-                                <table class="fit-table dev-users-table">
-                                    <thead><tr><th>Username</th><th>Role</th><th>Password</th><th>Session</th><th>Last Seen</th><th>Actions</th></tr></thead>
+                            <div class="table-scroll-area" style="flex:1;min-height:0;">
+                                <table class="fit-table dev-users-table" style="table-layout:fixed;">
+                                    <thead><tr>
+                                        <th style="width:60px;">Profile</th>
+                                        <th style="width:150px;">Username</th>
+                                        <th style="width:95px;">Role</th>
+                                        <th style="width:105px;">Last Login</th>
+                                        <th style="width:110px;">Password</th>
+                                        <th style="width:90px;">Session</th>
+                                        <th>Actions</th>
+                                    </tr></thead>
                                     <tbody id="devUsersBody"></tbody>
                                 </table>
                             </div>
@@ -803,23 +814,134 @@
                 </div>
             </div>
 
-            <div id="devStoragePanel" class="admin-tab-panel monitor-panel">
-                <div class="dashboard-stats-block">
-                    <h1 class="dashboard-main-title">Complete Bill Database</h1>
-                    <div class="dashboard-stats-grid">
-                        <div class="stat-card purple-accent">
-                            <div class="stat-label">System Revenue</div>
-                            <div class="stat-value" id="devTotalRevenue">Rs. 0.00</div>
-                            <div class="stat-sub" id="devBillCount">0 bills recorded</div>
+            <div id="devStoragePanel" class="admin-tab-panel monitor-panel" style="display:none;flex-direction:column;min-height:0;overflow:hidden;">
+                <div class="dev-dashboard-hero" style="flex-shrink:0;">
+                    <h1>Dashboard &amp; System Analytics</h1>
+                    <div class="dev-summary-grid" id="devSummaryGrid">
+                        <div class="dev-summary-card revenue">
+                            <div class="ds-label">Studio Revenue (Month)</div>
+                            <div class="ds-value" id="devMonthlyRevenue">Rs. 0.00</div>
+                            <div class="ds-sub">
+                                <span class="ds-pulse live"></span>
+                                <span id="devMonthLabel">Current month</span>
+                            </div>
                         </div>
-                        <div class="stat-card green-accent">
-                            <div class="stat-label">Total Users</div>
-                            <div class="stat-value" id="devUserCount" style="color:var(--green);">0</div>
-                            <div class="stat-sub">Full data control</div>
+                        <div class="dev-summary-card bills">
+                            <div class="ds-label">Total Bills Generated</div>
+                            <div class="ds-value" id="devTodayBills">0</div>
+                            <div class="ds-sub">
+                                <span class="ds-pulse live"></span>
+                                <span id="devTodayLabel">Bills added today</span>
+                            </div>
+                        </div>
+                        <div class="dev-summary-card designer">
+                            <div class="ds-label">Most Active Designer</div>
+                            <div class="ds-value" id="devTopDesigner">—</div>
+                            <div class="ds-sub">
+                                <span class="ds-pulse live"></span>
+                                <span id="devTopDesignerSub">No bills yet</span>
+                            </div>
+                        </div>
+                        <div class="dev-summary-card status">
+                            <div class="ds-label">Pending / Sync Status</div>
+                            <div class="ds-value" id="devSyncStatusValue">0</div>
+                            <div class="ds-sub">
+                                <span class="ds-pulse" id="devSyncStatusPulse"></span>
+                                <span id="devSyncStatusLabel">All synced</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="monitor-board">
+
+                <div class="dev-control-row">
+                    <div class="dev-ctrl-title">Quick Filters</div>
+                    <div class="filter-quick-btns">
+                        <button type="button" class="filter-quick-btn active" data-dev-dash-filter="today" id="devDashTodayBtn">Today</button>
+                        <button type="button" class="filter-quick-btn" data-dev-dash-filter="month" id="devDashMonthBtn">This Month</button>
+                        <button type="button" class="filter-quick-btn" data-dev-dash-filter="all" id="devDashAllBtn">All</button>
+                    </div>
+                    <div class="filter-bar-group">
+                        <label for="devDashDesignerFilter">Designer</label>
+                        <select id="devDashDesignerFilter"><option value="all">All</option></select>
+                    </div>
+                    <div class="filter-bar-group">
+                        <label for="devDashPeriodFilter">Period</label>
+                        <select id="devDashPeriodFilter">
+                            <option value="today" selected>Today</option>
+                            <option value="month">Month</option>
+                            <option value="year">Year</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="dev-activity-wrap">
+                    <div class="dev-dashboard-bottom">
+                        <div class="dev-panel-card">
+                            <div class="dev-panel-card-head">
+                                <h2>Recent Activity Log</h2>
+                                <span class="monitor-live-pill" style="font-size:10px;padding:3px 8px;">
+                                    <span class="pulse-dot"></span> LIVE
+                                </span>
+                            </div>
+                            <div class="dev-panel-card-body">
+                                <ul class="dev-timeline" id="devActivityTimeline">
+                                    <li class="dev-tl-item tl-system">
+                                        <div class="dev-tl-time">--:--:--</div>
+                                        <div class="dev-tl-msg">
+                                            <span class="tl-tag system">SYSTEM</span>
+                                            <strong>Waiting for data...</strong> Open All Data first or click Refresh.
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="dev-panel-card">
+                            <div class="dev-panel-card-head">
+                                <h2>System Overview</h2>
+                                <button type="button" class="btn-ghost btn-sm" id="devDashRefreshBtn">Refresh</button>
+                            </div>
+                            <div class="dev-panel-card-body" style="padding:16px 18px;">
+                                <div class="dashboard-stats-grid" style="grid-template-columns:1fr 1fr;">
+                                    <div class="stat-card purple-accent" style="padding:14px 16px;">
+                                        <div class="stat-label">System Revenue</div>
+                                        <div class="stat-value" id="devTotalRevenue" style="font-size:22px;">Rs. 0.00</div>
+                                        <div class="stat-sub" id="devBillCount">0 bills recorded</div>
+                                    </div>
+                                    <div class="stat-card green-accent" style="padding:14px 16px;">
+                                        <div class="stat-label">Total Users</div>
+                                        <div class="stat-value" id="devUserCount" style="color:var(--green);font-size:22px;">0</div>
+                                        <div class="stat-sub">Full data control</div>
+                                    </div>
+                                </div>
+                                <div style="margin-top:16px;">
+                                    <div class="monitor-kv" style="margin-bottom:8px;">
+                                        <span>App Version</span><strong>v3.7.0</strong>
+                                    </div>
+                                    <div class="monitor-kv" style="margin-bottom:8px;">
+                                        <span>Online Now</span><strong id="devDashOnlineUsers">0</strong>
+                                    </div>
+                                    <div class="monitor-kv" style="margin-bottom:8px;">
+                                        <span>Total Bills</span><strong id="devDashTotalBills">0</strong>
+                                    </div>
+                                    <div class="monitor-kv" style="margin-bottom:0;">
+                                        <span>Data Freshness</span><strong id="devDashLastUpdate">—</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed System Monitor Board -->
+                <div style="padding:0 20px 20px;flex-shrink:0;">
+                    <button type="button" class="btn-ghost btn-sm" id="devToggleMonitorBtn" style="margin-bottom:10px;">
+                        ▼ Show Advanced System Monitor
+                    </button>
+                </div>
+                <div id="advMonitorWrap" style="display:none;padding:0 20px 20px;min-height:0;overflow:hidden;flex-shrink:0;">
+                <div class="monitor-board" style="border-radius:var(--r);">
                     <header class="monitor-header">
                         <div class="monitor-header-left">
                             <h1>System Monitor Board</h1>
@@ -951,6 +1073,7 @@
                             <button type="button" class="adv-ctrl-btn" id="monitorExportDiagBtn">Export Diagnostics</button>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
