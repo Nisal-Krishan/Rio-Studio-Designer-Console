@@ -3128,6 +3128,8 @@ function printReport(title, totalAmount, subtitle = "") {
     let highlightedIndex = -1;
     let currentSuggestions = [];
     let activeConfig = null;
+    let debounceTimer = null;
+    const DEBOUNCE_DELAY = 150; // Optimize search with debounce
 
     function highlightText(text, query) {
         if (!query) return text;
@@ -3139,16 +3141,55 @@ function printReport(title, totalAmount, subtitle = "") {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
+    function formatDateForSearch(dateStr) {
+        if (!dateStr) return '';
+        try {
+            const date = new Date(dateStr);
+            const formats = [
+                date.toISOString().split('T')[0], // YYYY-MM-DD
+                date.toLocaleDateString('en-GB'), // DD/MM/YYYY
+                date.toLocaleDateString('en-US'), // MM/DD/YYYY
+                date.toLocaleDateString('sl-LK'), // Local format
+                date.getDate().toString(), // Just day
+                (date.getMonth() + 1).toString(), // Just month
+                date.getFullYear().toString() // Just year
+            ];
+            return formats;
+        } catch {
+            return [dateStr];
+        }
+    }
+
     function generateSuggestions(bills, query) {
         if (!query || query.length < 2) return [];
         const lowerQuery = query.toLowerCase();
         const seen = new Set();
         const suggestions = [];
+        const queryIsDateLike = /^\d{1,4}[-/]\d{1,2}[-/]\d{1,4}$/.test(query) || /^\d+$/.test(query);
 
         bills.forEach(bill => {
             const billNo = (bill.billNo || '').toLowerCase();
             const description = (bill.description || '').toLowerCase();
             const designer = (bill.username || '').toLowerCase();
+            const dateFormats = formatDateForSearch(bill.date);
+
+            // Check for date match
+            if (queryIsDateLike && !seen.has(bill.id)) {
+                const dateMatch = dateFormats.some(format => 
+                    format.toLowerCase().includes(lowerQuery) || 
+                    lowerQuery.includes(format.toLowerCase())
+                );
+                if (dateMatch) {
+                    seen.add(bill.id);
+                    suggestions.push({
+                        id: bill.id,
+                        main: `Bill No: ${bill.billNo}`,
+                        sub: `${bill.description || 'No description'} • ${bill.date || ''}`,
+                        type: 'date',
+                        bill: bill
+                    });
+                }
+            }
 
             if (billNo.includes(lowerQuery) && !seen.has(bill.id)) {
                 seen.add(bill.id);
@@ -3181,10 +3222,10 @@ function printReport(title, totalAmount, subtitle = "") {
                 });
             }
 
-            if (suggestions.length >= 8) return suggestions;
+            if (suggestions.length >= 10) return suggestions;
         });
 
-        return suggestions.slice(0, 8);
+        return suggestions.slice(0, 10);
     }
 
     function renderSuggestions(suggestionsId, suggestions, query) {
@@ -3282,8 +3323,12 @@ function printReport(title, totalAmount, subtitle = "") {
             handleSearchClick(input, config);
         });
 
+        // Debounced input handler for better performance
         input.addEventListener('input', (e) => {
-            showSuggestionsForInput(input, config);
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                showSuggestionsForInput(input, config);
+            }, DEBOUNCE_DELAY);
         });
 
         input.addEventListener('focus', () => {
@@ -3294,6 +3339,15 @@ function printReport(title, totalAmount, subtitle = "") {
             }
         });
 
+        input.addEventListener('blur', () => {
+            // Delay hiding to allow click on suggestion
+            setTimeout(() => {
+                if (!document.activeElement.closest('.search-suggestions')) {
+                    hideAllSuggestions();
+                }
+            }, 150);
+        });
+
         input.addEventListener('keydown', (e) => {
             if (!currentSuggestions.length || !activeConfig) return;
 
@@ -3301,12 +3355,26 @@ function printReport(title, totalAmount, subtitle = "") {
                 e.preventDefault();
                 highlightedIndex = Math.min(highlightedIndex + 1, currentSuggestions.length - 1);
                 const container = document.getElementById(activeConfig.suggestionsId);
-                if (container) updateHighlight(container);
+                if (container) {
+                    updateHighlight(container);
+                    // Auto-scroll to keep highlighted item visible
+                    const highlightedItem = container.querySelector('.highlighted');
+                    if (highlightedItem) {
+                        highlightedItem.scrollIntoView({ block: 'nearest' });
+                    }
+                }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 highlightedIndex = Math.max(highlightedIndex - 1, 0);
                 const container = document.getElementById(activeConfig.suggestionsId);
-                if (container) updateHighlight(container);
+                if (container) {
+                    updateHighlight(container);
+                    // Auto-scroll to keep highlighted item visible
+                    const highlightedItem = container.querySelector('.highlighted');
+                    if (highlightedItem) {
+                        highlightedItem.scrollIntoView({ block: 'nearest' });
+                    }
+                }
             } else if (e.key === 'Enter' && highlightedIndex >= 0) {
                 e.preventDefault();
                 const selectedBill = currentSuggestions[highlightedIndex];
