@@ -854,7 +854,8 @@ function renderDevBillsTable(bills) {
         const key = billSelectKey(b);
         const checked = devSelectedBills.has(key) ? " checked" : "";
         grandTotal += billLineTotal(b);
-        return `<tr class="dev-bill-row${checked ? " selected" : ""}" data-key="${escAttr(key)}" title="Double-click to edit">
+        const billIdAttr = b.id ? `data-bill-id="${escAttr(b.id)}"` : (b.localId ? `data-bill-id="${escAttr(b.localId)}"` : '');
+        return `<tr class="dev-bill-row${checked ? " selected" : ""}" ${billIdAttr} data-key="${escAttr(key)}" title="Double-click to edit">
             <td class="col-check"><input type="checkbox" class="dev-bill-check" data-key="${escAttr(key)}"${checked}></td>
             ${billRowCells(b, { showDesigner: true, showActions: true, showUpdated: true, actionsUseKey: true })}
         </tr>`;
@@ -3325,6 +3326,8 @@ function printReport(title, totalAmount, subtitle = "") {
                         if (activeConfig.panel === 'admin' && typeof refreshAdminBillsView === 'function') refreshAdminBillsView();
                         else if (activeConfig.panel === 'designer' && typeof refreshDesignerBillsView === 'function') refreshDesignerBillsView();
                         else if (activeConfig.panel === 'dev' && typeof refreshDevBillsView === 'function') refreshDevBillsView();
+                        // Scroll to and highlight the selected bill row
+                        setTimeout(() => scrollToBill(selectedBill.bill.id), 100);
                     }
                 }
             });
@@ -3376,12 +3379,35 @@ function printReport(title, totalAmount, subtitle = "") {
     }
 
     function scrollToBill(billId) {
-        const row = document.querySelector(`tr[data-bill-id="${billId}"]`);
+        // Try to find row by data-bill-id attribute first
+        let row = document.querySelector(`tr[data-bill-id="${billId}"]`);
+        
+        // If not found, try to find by key for dev panel
+        if (!row) {
+            row = document.querySelector(`tr[data-key="${billId}"]`);
+        }
+        
         if (row) {
-            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            row.style.transition = 'background-color 0.3s';
+            const scrollContainer = row.closest('.table-scroll-area');
+            if (scrollContainer) {
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const rowRect = row.getBoundingClientRect();
+                const offsetTop = row.offsetTop - scrollContainer.offsetTop;
+                
+                scrollContainer.scrollTo({
+                    top: offsetTop - (containerRect.height / 2) + (rowRect.height / 2),
+                    behavior: 'smooth'
+                });
+            } else {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            row.style.transition = 'background-color 0.5s ease';
             row.style.backgroundColor = 'var(--accent-bg)';
-            setTimeout(() => { row.style.backgroundColor = ''; }, 2000);
+            setTimeout(() => { 
+                row.style.backgroundColor = ''; 
+                row.style.transition = '';
+            }, 2500);
         }
     }
 
