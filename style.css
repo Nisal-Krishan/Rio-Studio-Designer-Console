@@ -3096,6 +3096,106 @@ tfoot th {
     flex-shrink: 0;
 }
 
+/* ═══ SEARCH BAR (Full Width with Suggestions) ═══ */
+.search-bar-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 280px;
+    max-width: 520px;
+}
+
+.search-bar-wrapper.search-full-width {
+    max-width: none;
+    min-width: 320px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.search-input-full {
+    width: 100%;
+    padding: 10px 14px 10px 42px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: var(--tr);
+}
+
+.search-input-full:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+    background: #000;
+}
+
+.search-input-full::placeholder {
+    color: var(--text-muted);
+}
+
+.search-suggestions {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    box-shadow: var(--shadow);
+    z-index: 100;
+    max-height: 280px;
+    overflow-y: auto;
+    display: none;
+}
+
+.search-suggestions.active {
+    display: block;
+}
+
+.search-suggestion-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: var(--tr);
+}
+
+.search-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.search-suggestion-item:hover,
+.search-suggestion-item.highlighted {
+    background: var(--accent-bg);
+}
+
+.search-suggestion-item .suggestion-main {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+
+.search-suggestion-item .suggestion-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.search-suggestion-item .suggestion-highlight {
+    color: var(--accent-soft);
+    font-weight: 700;
+}
+
 /* ═══ EXPORT & REVIEW ═══ */
 .export-panel {
     flex: 1;
