@@ -177,79 +177,7 @@
         </div>
     </div>
 
-    <!-- Floating Chat Button (always visible for designers & devs) -->
-    <div id="floatingChatBtn" class="floating-chat-btn hidden" title="Open Chat">
-        <svg class="floating-chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-        <span class="floating-chat-badge hidden" id="floatingChatBadge">0</span>
-    </div>
 
-    <!-- Chat Panel (slide-in from right) -->
-    <div id="chatPanel" class="chat-panel hidden">
-        <div class="chat-panel-header">
-            <div class="chat-panel-title">
-                <svg class="chat-panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <div class="chat-panel-text">
-                    <h3 id="chatPanelTitle">Chat</h3>
-                    <p id="chatPanelSubtitle">Online</p>
-                </div>
-            </div>
-            <button type="button" class="chat-panel-close" id="chatPanelClose" title="Close Chat">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-        <div class="chat-panel-messages" id="chatMessagesContainer">
-            <div class="chat-welcome-message">
-                <p>Welcome to the chat! Messages are visible to all designers and the developer.</p>
-            </div>
-        </div>
-        <div class="chat-panel-input">
-            <input type="text" id="chatMessageInput" placeholder="Type your message..." maxlength="500" autocomplete="off">
-            <button type="button" class="chat-panel-send" id="chatSendBtn" title="Send Message">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
-            </button>
-        </div>
-    </div>
-
-    <!-- Old Chat Modal (kept for compatibility, hidden by default) -->
-    <div id="chatModal" class="modal-overlay hidden">
-        <div class="chat-modal-card">
-            <div class="chat-modal-header">
-                <div class="chat-header-title">
-                    <svg class="chat-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <h3 id="chatModalTitle">Chat</h3>
-                </div>
-                <button type="button" class="modal-close" id="chatModalClose">&times;</button>
-            </div>
-            <div class="chat-modal-body">
-                <div class="chat-messages-container" id="chatMessagesContainerOld">
-                    <div class="chat-welcome-message">
-                        <p>Welcome to the chat! Messages are visible to all designers and the developer.</p>
-                    </div>
-                </div>
-                <div class="chat-input-area">
-                    <input type="text" id="chatMessageInputOld" placeholder="Type your message..." maxlength="500" autocomplete="off">
-                    <button type="button" class="btn-chat-send" id="chatSendBtnOld">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Full View Table Overlay -->
     <div id="fullViewModal" class="fullview-overlay hidden">
@@ -270,33 +198,7 @@
         </div>
     </div>
 
-    <!-- Update Available Modal -->
-    <div id="updateModal" class="modal-overlay hidden">
-        <div class="update-modal-card">
-            <div class="update-modal-header">
-                <div class="update-icon-wrap">
-                    <svg class="update-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="currentColor"/>
-                        <path d="M12 6C12.55 6 13 6.45 13 7V11.59L16.29 14.88C16.68 15.27 16.68 15.9 16.29 16.29C15.9 16.68 15.27 16.68 14.88 16.29L11.29 12.71C11.11 12.53 11 12.28 11 12V7C11 6.45 11.45 6 12 6Z" fill="currentColor"/>
-                    </svg>
-                </div>
-                <div class="update-title-group">
-                    <h3>Update Available</h3>
-                    <p id="updateVersionText">A new version is ready to download</p>
-                </div>
-            </div>
-            <div class="update-modal-body">
-                <div class="update-progress-track">
-                    <div class="update-progress-fill" id="updateProgressBar"></div>
-                </div>
-                <p class="update-status-text" id="updateStatusText">Checking for updates...</p>
-            </div>
-            <div class="update-modal-footer hidden" id="updateModalFooter">
-                <button type="button" class="btn-ghost" id="updateLaterBtn">Later</button>
-                <button type="button" class="btn-primary btn-sm" id="restartInstallBtn">Restart & Update</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- LOGIN -->
     <section id="loginSection" class="app-section">
@@ -387,7 +289,7 @@
                     <div class="table-header table-header-ledger">
                         <h2>Master Bill Ledger</h2>
                         <div class="table-header-filters">
-                            <div class="search-bar-wrapper search-full-width">
+                            <div class="search-bar-wrapper">
                                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                                 <input type="text" class="search-input-full" id="adminLedgerSearch" placeholder="Search by bill no, description, designer..." autocomplete="off">
                                 <div class="search-suggestions" id="adminLedgerSuggestions"></div>
@@ -565,13 +467,7 @@
                 <button type="button" class="btn-sync" id="designerSyncBtn" title="Update all data">
                     <span class="sync-icon">↻</span> Update <span id="designerPendingCount" class="pending-badge hidden">0</span>
                 </button>
-                <!-- Chat button for Designer-Dev communication -->
-                <button type="button" class="btn-chat-toggle" id="designerChatToggleBtn" title="Chat with Dev">
-                    <svg class="chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span class="chat-badge hidden" id="designerChatBadge">0</span>
-                </button>
+
                 <div class="user-chip">
                     <div class="user-avatar" id="designerAvatar">D</div>
                     <div class="user-info">
@@ -639,7 +535,7 @@
                                     </div>
                                 </div>
                                 <div class="table-header-filters">
-                                    <div class="search-bar-wrapper search-full-width">
+                                    <div class="search-bar-wrapper">
                                         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                                         <input type="text" class="search-input-full" id="designerLedgerSearch" placeholder="Search by bill no, description, designer..." autocomplete="off">
                                         <div class="search-suggestions" id="designerLedgerSuggestions"></div>
@@ -781,13 +677,7 @@
                     <div class="signal-bars" data-level="0"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
                 </div>
                 <button type="button" class="btn-sync" id="devSyncBtn" title="Update all data"><span class="sync-icon">↻</span> Update <span id="devPendingCount" class="pending-badge hidden">0</span></button>
-                <!-- Chat button for Dev-Designer communication -->
-                <button type="button" class="btn-chat-toggle" id="devChatToggleBtn" title="Chat with Designers">
-                    <svg class="chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span class="chat-badge hidden" id="devChatBadge">0</span>
-                </button>
+
                 <button class="btn-logout" id="devLogoutBtn">Logout</button>
             </div>
         </nav>
@@ -810,7 +700,7 @@
                     <div class="table-header table-header-ledger">
                         <h2>Complete Bill Database</h2>
                         <div class="table-header-filters">
-                            <div class="search-bar-wrapper search-full-width">
+                            <div class="search-bar-wrapper">
                                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                                 <input type="text" class="search-input-full" id="devLedgerSearch" placeholder="Search by bill no, description, designer..." autocomplete="off">
                                 <div class="search-suggestions" id="devLedgerSuggestions"></div>

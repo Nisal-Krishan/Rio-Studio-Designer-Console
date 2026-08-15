@@ -1857,6 +1857,19 @@ function getFilteredAdminLedgerBills(cloud) {
     if (state.type === "range" && !isRangeFilterReady(state)) return [];
     let filtered = filterBillsByPeriod(all, state);
     if (filtered === null) filtered = [];
+    
+    const searchInput = document.getElementById("adminLedgerSearch");
+    if (searchInput && searchInput.value.trim() !== "") {
+        const query = searchInput.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        filtered = filtered.filter(b => {
+            const billNo = (b.billNo || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const desc = (b.description || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const user = (b.username || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const customer = (b.customerName || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return billNo.includes(query) || desc.includes(query) || user.includes(query) || customer.includes(query);
+        });
+    }
+    
     return filtered;
 }
 
@@ -1912,6 +1925,19 @@ function getFilteredDevBills(cloud) {
     if (state.type === "range" && !isRangeFilterReady(state)) return [];
     let filtered = filterBillsByPeriod(bills, state);
     if (filtered === null) filtered = [];
+    
+    const searchInput = document.getElementById("devLedgerSearch");
+    if (searchInput && searchInput.value.trim() !== "") {
+        const query = searchInput.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        filtered = filtered.filter(b => {
+            const billNo = (b.billNo || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const desc = (b.description || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const user = (b.username || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const customer = (b.customerName || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return billNo.includes(query) || desc.includes(query) || user.includes(query) || customer.includes(query);
+        });
+    }
+    
     return filtered;
 }
 
@@ -2414,6 +2440,18 @@ function refreshDesignerBillsView() {
     }
     let filtered = filterBillsByPeriod(all, state);
     if (filtered === null) filtered = [];
+    
+    const searchInput = document.getElementById("designerLedgerSearch");
+    if (searchInput && searchInput.value.trim() !== "") {
+        const query = searchInput.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        filtered = filtered.filter(b => {
+            const billNo = (b.billNo || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const desc = (b.description || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const user = (b.username || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const customer = (b.customerName || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return billNo.includes(query) || desc.includes(query) || user.includes(query) || customer.includes(query);
+        });
+    }
     renderBillsTable("designerBillsBody", filtered, {
         showActions: true,
         totalIds: { revenue: "designerTotalRevenue", table: "designerTableTotal", count: "designerBillCount" }
@@ -2974,83 +3012,7 @@ function maybeShowWelcomePatchNotes() {
 initApp();
 initDesignerCapsLock();
 
-/* ─── Auto-Update UI Logic ─── */
-(function initAutoUpdater() {
-    if (!window.rioUpdater) return;
 
-    const updateModal = document.getElementById("updateModal");
-    const updateProgressBar = document.getElementById("updateProgressBar");
-    const updateStatusText = document.getElementById("updateStatusText");
-    const updateVersionText = document.getElementById("updateVersionText");
-    const updateModalFooter = document.getElementById("updateModalFooter");
-    const restartInstallBtn = document.getElementById("restartInstallBtn");
-    const updateLaterBtn = document.getElementById("updateLaterBtn");
-
-    function showUpdateModal() {
-        if (updateModal) updateModal.classList.remove("hidden");
-    }
-
-    function hideUpdateModal() {
-        if (updateModal) updateModal.classList.add("hidden");
-    }
-
-    // Listen for update checking
-    window.rioUpdater.onUpdateChecking(() => {
-        console.log("[Updater] Checking for updates...");
-        if (updateStatusText) updateStatusText.textContent = "Checking for updates...";
-        if (updateProgressBar) updateProgressBar.style.width = "0%";
-    });
-
-    // Listen for update available
-    window.rioUpdater.onUpdateAvailable((info) => {
-        console.log("[Updater] Update available:", info.version);
-        if (updateVersionText) updateVersionText.textContent = `Version ${info.version} is available`;
-        if (updateStatusText) updateStatusText.textContent = "Downloading update...";
-        if (updateProgressBar) updateProgressBar.style.width = "5%";
-        showUpdateModal();
-    });
-
-    // Listen for update not available
-    window.rioUpdater.onUpdateNotAvailable(() => {
-        console.log("[Updater] Already up to date");
-    });
-
-    // Listen for download progress
-    window.rioUpdater.onUpdateDownloadProgress((progress) => {
-        const percent = Math.round(progress.percent || 0);
-        console.log(`[Updater] Downloading: ${percent}%`);
-        if (updateProgressBar) updateProgressBar.style.width = `${percent}%`;
-        if (updateStatusText) updateStatusText.textContent = `Downloading update: ${percent}%`;
-    });
-
-    // Listen for update downloaded
-    window.rioUpdater.onUpdateDownloaded((info) => {
-        console.log("[Updater] Update downloaded:", info.version);
-        if (updateStatusText) updateStatusText.textContent = "Update ready to install";
-        if (updateProgressBar) updateProgressBar.style.width = "100%";
-        if (updateModalFooter) updateModalFooter.classList.remove("hidden");
-    });
-
-    // Listen for errors — silent on startup (no GitHub release yet)
-    window.rioUpdater.onUpdateError((error) => {
-        console.warn("[Updater] Skipped:", error.message);
-    });
-
-    // Restart & Install button
-    if (restartInstallBtn) {
-        restartInstallBtn.addEventListener("click", () => {
-            console.log("[Updater] Restarting to install update...");
-            window.rioUpdater.restartAndInstall();
-        });
-    }
-
-    // Later button
-    if (updateLaterBtn) {
-        updateLaterBtn.addEventListener("click", () => {
-            hideUpdateModal();
-        });
-    }
-})();
 
 /* ─── Premium UI helpers (filters, analytics, print) ─── */
 function populateDesignerFilter(selectElement, bills) {
@@ -3355,9 +3317,15 @@ function printReport(title, totalAmount, subtitle = "") {
             item.addEventListener('click', () => {
                 const index = parseInt(item.dataset.index, 10);
                 const selectedBill = suggestions[index];
-                if (selectedBill) {
-                    scrollToBill(selectedBill.bill.id);
-                    hideAllSuggestions();
+                if (selectedBill && activeConfig) {
+                    const input = document.getElementById(activeConfig.inputId);
+                    if (input) {
+                        input.value = selectedBill.bill.billNo || selectedBill.bill.id;
+                        hideAllSuggestions();
+                        if (activeConfig.panel === 'admin' && typeof refreshAdminBillsView === 'function') refreshAdminBillsView();
+                        else if (activeConfig.panel === 'designer' && typeof refreshDesignerBillsView === 'function') refreshDesignerBillsView();
+                        else if (activeConfig.panel === 'dev' && typeof refreshDevBillsView === 'function') refreshDevBillsView();
+                    }
                 }
             });
 
@@ -3432,6 +3400,9 @@ function printReport(title, totalAmount, subtitle = "") {
             if (debounceTimer) clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 showSuggestionsForInput(input, config);
+                if (config.panel === 'admin' && typeof refreshAdminBillsView === 'function') refreshAdminBillsView();
+                else if (config.panel === 'designer' && typeof refreshDesignerBillsView === 'function') refreshDesignerBillsView();
+                else if (config.panel === 'dev' && typeof refreshDevBillsView === 'function') refreshDevBillsView();
             }, DEBOUNCE_DELAY);
         });
 
@@ -3528,220 +3499,4 @@ function printReport(title, totalAmount, subtitle = "") {
     modal.addEventListener("click", (e) => { if (e.target === modal) closePatchNotes(); });
 })();
 
-/* ─── Chat System (Designer <-> Dev) - NEW FLOATING PANEL ─── */
-(function initChatSystem() {
-    // New floating panel elements
-    const floatingChatBtn = document.getElementById("floatingChatBtn");
-    const chatPanel = document.getElementById("chatPanel");
-    const chatPanelClose = document.getElementById("chatPanelClose");
-    const floatingChatBadge = document.getElementById("floatingChatBadge");
-    
-    // Old modal elements (fallback)
-    const chatModal = document.getElementById("chatModal");
-    const designerChatToggleBtn = document.getElementById("designerChatToggleBtn");
-    const devChatToggleBtn = document.getElementById("devChatToggleBtn");
-    const chatModalClose = document.getElementById("chatModalClose");
-    const chatMessagesContainer = document.getElementById("chatMessagesContainer");
-    const chatMessageInput = document.getElementById("chatMessageInput");
-    const chatSendBtn = document.getElementById("chatSendBtn");
-    const designerChatBadge = document.getElementById("designerChatBadge");
-    const devChatBadge = document.getElementById("devChatBadge");
-    
-    if (!chatPanel || !chatMessageInput) return;
-    
-    const CHAT_LS_KEY = "rio_chat_messages";
-    let unreadCount = { designer: 0, dev: 0 };
-    
-    function getChatMessages() {
-        try {
-            const msgs = localStorage.getItem(CHAT_LS_KEY);
-            return msgs ? JSON.parse(msgs) : [];
-        } catch { return []; }
-    }
-    
-    function saveChatMessages(messages) {
-        try {
-            localStorage.setItem(CHAT_LS_KEY, JSON.stringify(messages));
-        } catch { /* ignore */ }
-    }
-    
-    function formatTime(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    function renderMessages() {
-        const messages = getChatMessages();
-        const isDev = currentUser?.role === 'developer';
-        
-        if (messages.length === 0) {
-            chatMessagesContainer.innerHTML = `
-                <div class="chat-welcome-message">
-                    <p>Welcome to the chat! Messages are visible to all designers and the developer.</p>
-                </div>
-            `;
-            return;
-        }
-        
-        chatMessagesContainer.innerHTML = messages.map(msg => {
-            const isSent = msg.sender === currentUser?.username;
-            const senderClass = isSent ? 'sent' : 'received';
-            const senderName = msg.role === 'developer' ? 'Dev' : msg.sender;
-            
-            return `
-                <div class="chat-message ${senderClass}">
-                    ${!isSent ? `<div class="chat-message-sender">${senderName}</div>` : ''}
-                    <div class="chat-message-bubble">${escapeHtml(msg.text)}</div>
-                    <div class="chat-message-meta">${formatTime(msg.timestamp)}</div>
-                </div>
-            `;
-        }).join('');
-        
-        // Scroll to bottom with smooth behavior
-        setTimeout(() => {
-            chatMessagesContainer.scrollTo({
-                top: chatMessagesContainer.scrollHeight,
-                behavior: 'smooth'
-            });
-        }, 50);
-    }
-    
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    function sendMessage() {
-        const text = chatMessageInput.value.trim();
-        if (!text || !currentUser) return;
-        
-        const messages = getChatMessages();
-        const newMessage = {
-            id: Date.now().toString(),
-            sender: currentUser.username,
-            role: currentUser.role,
-            text: text,
-            timestamp: Date.now()
-        };
-        
-        messages.push(newMessage);
-        saveChatMessages(messages);
-        chatMessageInput.value = '';
-        renderMessages();
-        
-        // Update badges for other users (both navbar and floating)
-        if (currentUser.role === 'designer') {
-            unreadCount.dev = (unreadCount.dev || 0) + 1;
-            updateBadge(devChatBadge, unreadCount.dev);
-            updateBadge(floatingChatBadge, unreadCount.dev);
-        } else if (currentUser.role === 'developer') {
-            unreadCount.designer = (unreadCount.designer || 0) + 1;
-            updateBadge(designerChatBadge, unreadCount.designer);
-            updateBadge(floatingChatBadge, unreadCount.designer);
-        }
-    }
-    
-    function updateBadge(badgeElement, count) {
-        if (!badgeElement) return;
-        if (count > 0) {
-            badgeElement.textContent = count > 99 ? '99+' : count;
-            badgeElement.classList.remove('hidden');
-        } else {
-            badgeElement.classList.add('hidden');
-        }
-    }
-    
-    function openChat() {
-        // Open the new slide-in panel
-        chatPanel.classList.remove('hidden');
-        // Small delay to allow display:block to apply before adding open class for transition
-        setTimeout(() => {
-            chatPanel.classList.add('open');
-        }, 10);
-        renderMessages();
-        chatMessageInput.focus();
-        
-        // Clear unread count for current user and update floating badge
-        if (currentUser?.role === 'designer') {
-            unreadCount.designer = 0;
-            updateBadge(designerChatBadge, 0);
-            updateBadge(floatingChatBadge, 0);
-        } else if (currentUser?.role === 'developer') {
-            unreadCount.dev = 0;
-            updateBadge(devChatBadge, 0);
-            updateBadge(floatingChatBadge, 0);
-        }
-    }
-    
-    function closeChat() {
-        chatPanel.classList.remove('open');
-        // Wait for transition to finish before hiding
-        setTimeout(() => {
-            chatPanel.classList.add('hidden');
-        }, 400);
-    }
-    
-    function showFloatingButton() {
-        if (floatingChatBtn) {
-            floatingChatBtn.classList.remove('hidden');
-        }
-    }
-    
-    function hideFloatingButton() {
-        if (floatingChatBtn) {
-            floatingChatBtn.classList.add('hidden');
-        }
-    }
-    
-    function updateFloatingBadge() {
-        let totalUnread = 0;
-        if (currentUser?.role === 'designer') {
-            totalUnread = unreadCount.designer;
-        } else if (currentUser?.role === 'developer') {
-            totalUnread = unreadCount.dev;
-        }
-        updateBadge(floatingChatBadge, totalUnread);
-    }
-    
-    // Event listeners - New floating button
-    if (floatingChatBtn) {
-        floatingChatBtn.addEventListener('click', openChat);
-    }
-    
-    if (chatPanelClose) {
-        chatPanelClose.addEventListener('click', closeChat);
-    }
-    
-    // Also support old navbar buttons (they now open the panel instead of modal)
-    if (designerChatToggleBtn && currentUser?.role === 'designer') {
-        designerChatToggleBtn.addEventListener('click', openChat);
-    }
-    
-    if (devChatToggleBtn && currentUser?.role === 'developer') {
-        devChatToggleBtn.addEventListener('click', openChat);
-    }
-    
-    chatSendBtn?.addEventListener('click', sendMessage);
-    
-    chatMessageInput?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
-    
-    // Close panel when clicking outside (on the overlay effect)
-    document.addEventListener('click', (e) => {
-        if (chatPanel && !chatPanel.contains(e.target) && !floatingChatBtn?.contains(e.target) && !chatPanel.classList.contains('hidden')) {
-            closeChat();
-        }
-    });
-    
-    // Show floating button after a short delay on page load
-    setTimeout(showFloatingButton, 1000);
-    
-    // Initial render and badge update
-    renderMessages();
-    updateFloatingBadge();
-})();
+
