@@ -1154,7 +1154,9 @@ function billRowCells(b, opts) {
     const design = billDesignCharge(b);
     const total = billLineTotal(b);
     const desc = b.description ? `<span class="desc-col" title="${escAttr(b.description)}">${b.description}</span>` : `<span class="money-sub">—</span>`;
-    return `<td>${b.date || "—"}</td>
+    const billIdAttr = b.id ? `data-bill-id="${b.id}"` : (b.localId ? `data-bill-id="${b.localId}"` : '');
+    return `<tr ${billIdAttr}>${showDesigner || showActions || showUpdated ? '' : ''}
+        <td>${b.date || "—"}</td>
         <td><strong>${b.billNo || "—"}</strong></td>
         ${showDesigner ? `<td><span class="role-badge designer">${b.username || "?"}</span></td>` : ""}
         <td>${desc}</td>
@@ -1235,7 +1237,7 @@ function renderBillsTable(tbodyId, bills, opts = {}) {
         : bills.map((b) => {
             grandTotal += billLineTotal(b);
             designTotal += billDesignCharge(b);
-            return `<tr>${billRowCells(b, { showDesigner, showActions, showUpdated })}</tr>`;
+            return billRowCells(b, { showDesigner, showActions, showUpdated });
         }).join("");
     if (totalIds.revenue) document.getElementById(totalIds.revenue).textContent = "Rs. " + formatMoney(grandTotal);
     if (totalIds.table) document.getElementById(totalIds.table).textContent = "Rs. " + formatMoney(grandTotal);
@@ -3112,6 +3114,190 @@ function printReport(title, totalAmount, subtitle = "") {
     document.getElementById("designerExportPdfBtn")?.addEventListener("click", () => {
         printReport("Rio Studio Designers — Personal Report", document.getElementById("designerTableTotal")?.textContent || "Rs. 0.00",
             currentUser ? `Designer: ${currentUser.username}` : "");
+    });
+})();
+
+/* ─── Search Bar with Suggestions (Admin, Designer, Dev) ─── */
+(function initSearchBars() {
+    const SEARCH_CONFIGS = [
+        { inputId: 'adminLedgerSearch', suggestionsId: 'adminLedgerSuggestions', panel: 'admin', getBills: () => mergeBills() },
+        { inputId: 'designerLedgerSearch', suggestionsId: 'designerLedgerSuggestions', panel: 'designer', getBills: () => { const user = currentUser?.username; return mergeBills().filter(b => b.username === user); } },
+        { inputId: 'devLedgerSearch', suggestionsId: 'devLedgerSuggestions', panel: 'dev', getBills: () => mergeBills() }
+    ];
+
+    let highlightedIndex = -1;
+    let currentSuggestions = [];
+
+    function highlightText(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+        return text.replace(regex, '<span class="suggestion-highlight">$1</span>');
+    }
+
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function generateSuggestions(bills, query) {
+        if (!query || query.length < 2) return [];
+        const lowerQuery = query.toLowerCase();
+        const seen = new Set();
+        const suggestions = [];
+
+        bills.forEach(bill => {
+            const billNo = (bill.billNo || '').toLowerCase();
+            const description = (bill.description || '').toLowerCase();
+            const designer = (bill.username || '').toLowerCase();
+
+            if (billNo.includes(lowerQuery) && !seen.has(bill.id)) {
+                seen.add(bill.id);
+                suggestions.push({
+                    id: bill.id,
+                    main: `Bill No: ${bill.billNo}`,
+                    sub: `${bill.description || 'No description'} • ${bill.date || ''}`,
+                    type: 'billNo',
+                    bill: bill
+                });
+            }
+            if (description.includes(lowerQuery) && !seen.has(bill.id)) {
+                seen.add(bill.id);
+                suggestions.push({
+                    id: bill.id,
+                    main: bill.billNo,
+                    sub: `${bill.description} • Rs. ${bill.price?.toFixed(2) || '0.00'}`,
+                    type: 'description',
+                    bill: bill
+                });
+            }
+            if (designer.includes(lowerQuery) && !seen.has(bill.id)) {
+                seen.add(bill.id);
+                suggestions.push({
+                    id: bill.id,
+                    main: `Designer: ${bill.username}`,
+                    sub: `${bill.billNo} • ${bill.description || ''}`,
+                    type: 'designer',
+                    bill: bill
+                });
+            }
+
+            if (suggestions.length >= 8) return suggestions;
+        });
+
+        return suggestions.slice(0, 8);
+    }
+
+    function renderSuggestions(suggestionsId, suggestions, query) {
+        const container = document.getElementById(suggestionsId);
+        if (!container) return;
+
+        if (!suggestions || suggestions.length === 0) {
+            container.classList.remove('active');
+            container.innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = suggestions.map((s, idx) => `
+            <div class="search-suggestion-item" data-index="${idx}" data-bill-id="${s.bill.id}">
+                <div class="suggestion-main">${highlightText(s.main, query)}</div>
+                <div class="suggestion-sub">${highlightText(s.sub, query)}</div>
+            </div>
+        `).join('');
+
+        container.classList.add('active');
+
+        container.querySelectorAll('.search-suggestion-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const index = parseInt(item.dataset.index, 10);
+                const selectedBill = suggestions[index];
+                if (selectedBill) {
+                    scrollToBill(selectedBill.bill.id);
+                    hideAllSuggestions();
+                }
+            });
+
+            item.addEventListener('mouseenter', () => {
+                highlightedIndex = parseInt(item.dataset.index, 10);
+                updateHighlight(container);
+            });
+        });
+    }
+
+    function updateHighlight(container) {
+        container.querySelectorAll('.search-suggestion-item').forEach((item, idx) => {
+            item.classList.toggle('highlighted', idx === highlightedIndex);
+        });
+    }
+
+    function hideAllSuggestions() {
+        document.querySelectorAll('.search-suggestions').forEach(el => {
+            el.classList.remove('active');
+        });
+        highlightedIndex = -1;
+        currentSuggestions = [];
+    }
+
+    function scrollToBill(billId) {
+        const row = document.querySelector(`tr[data-bill-id="${billId}"]`);
+        if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            row.style.transition = 'background-color 0.3s';
+            row.style.backgroundColor = 'var(--accent-bg)';
+            setTimeout(() => { row.style.backgroundColor = ''; }, 2000);
+        }
+    }
+
+    SEARCH_CONFIGS.forEach(config => {
+        const input = document.getElementById(config.inputId);
+        if (!input) return;
+
+        input.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            const bills = config.getBills();
+            currentSuggestions = generateSuggestions(bills, query);
+            renderSuggestions(config.suggestionsId, currentSuggestions, query);
+            highlightedIndex = -1;
+        });
+
+        input.addEventListener('focus', () => {
+            const query = input.value.trim();
+            if (query.length >= 2) {
+                const bills = config.getBills();
+                currentSuggestions = generateSuggestions(bills, query);
+                renderSuggestions(config.suggestionsId, currentSuggestions, query);
+            }
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (!currentSuggestions.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlightedIndex = Math.min(highlightedIndex + 1, currentSuggestions.length - 1);
+                const container = document.getElementById(config.suggestionsId);
+                if (container) updateHighlight(container);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlightedIndex = Math.max(highlightedIndex - 1, 0);
+                const container = document.getElementById(config.suggestionsId);
+                if (container) updateHighlight(container);
+            } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+                e.preventDefault();
+                const selectedBill = currentSuggestions[highlightedIndex];
+                if (selectedBill) {
+                    scrollToBill(selectedBill.bill.id);
+                    hideAllSuggestions();
+                }
+            } else if (e.key === 'Escape') {
+                hideAllSuggestions();
+                input.blur();
+            }
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-bar-wrapper')) {
+            hideAllSuggestions();
+        }
     });
 })();
 
