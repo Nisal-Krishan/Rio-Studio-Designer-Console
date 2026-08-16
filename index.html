@@ -737,20 +737,21 @@
                         </div>
                     </div>
                 </div>
-                <div class="dev-bulk-bar" id="devBulkBar">
-                    <label class="dev-select-all-label">
-                        <input type="checkbox" id="devSelectAllBills"> Select all on page
-                    </label>
-                    <span class="dev-selected-count" id="devSelectedCount">0 selected</span>
-                    <button type="button" class="btn-danger-solid btn-sm" id="devDeleteSelectedBtn" disabled>Delete Selected</button>
-                    <button type="button" class="btn-ghost btn-sm" id="devClearSelectionBtn">Clear</button>
-                </div>
-                <div class="table-scroll-area dev-table-scroll">
-                    <table class="fit-table admin-ledger-table dev-bills-table">
-                        <thead><tr>
-                            <th class="col-check"><input type="checkbox" id="devSelectAllHeader" title="Select all"></th>
-                            <th>Date</th><th>Bill No</th><th>Designer</th><th>Description</th><th>Price</th><th>Design</th><th class="col-total">Total</th><th class="col-updated">Last Update</th><th class="col-status">Status</th><th class="col-actions">Actions</th>
-                        </tr></thead>
+                <div class="table-scroll-area">
+                    <table id="devBillsTable" class="designer-bills-table fit-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Bill No</th>
+                                <th>Designer</th>
+                                <th>Description</th>
+                                <th>Price</th>
+                                <th>Design</th>
+                                <th class="col-total">Total</th>
+                                <th class="col-status">Status</th>
+                                <th class="col-actions">Actions</th>
+                            </tr>
+                        </thead>
                         <tbody id="devBillsBody"></tbody>
                     </table>
                 </div>
