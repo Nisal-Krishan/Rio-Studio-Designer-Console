@@ -766,6 +766,23 @@
                     <aside class="left-panel dev-panel">
                         <div class="panel-label">Developer Controls</div>
                         <p class="dev-info">View all passwords, login as any user, or manage accounts. Removing a user deletes all their bills.</p>
+                        
+                        <!-- Live User Stats -->
+                        <div class="dev-live-stats">
+                            <div class="dev-stat-mini">
+                                <span class="dev-stat-value" id="devTotalUsersCount">0</span>
+                                <span class="dev-stat-label">Total Users</span>
+                            </div>
+                            <div class="dev-stat-mini online">
+                                <span class="dev-stat-value" id="devOnlineUsersCount">0</span>
+                                <span class="dev-stat-label">Online Now</span>
+                            </div>
+                            <div class="dev-stat-mini offline">
+                                <span class="dev-stat-value" id="devOfflineUsersCount">0</span>
+                                <span class="dev-stat-label">Offline</span>
+                            </div>
+                        </div>
+                        
                         <form id="devAddUserForm">
                             <div class="form-group">
                                 <label for="devNewUsername">New Username</label>
@@ -789,6 +806,11 @@
                         <div class="table-container data-table-panel" style="display:flex;flex-direction:column;min-height:0;">
                             <div class="dev-users-header">
                                 <h2>All System Users</h2>
+                                <div class="user-status-filters">
+                                    <button type="button" class="filter-chip active" data-user-filter="all">All</button>
+                                    <button type="button" class="filter-chip" data-user-filter="online">🟢 Online</button>
+                                    <button type="button" class="filter-chip" data-user-filter="offline">⚫ Offline</button>
+                                </div>
                                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                                     <button type="button" class="btn-add-user" id="devAddNewUserBtn">
                                         <span class="plus">+</span> Add New User
@@ -802,9 +824,9 @@
                                         <th style="width:60px;">Profile</th>
                                         <th style="width:150px;">Username</th>
                                         <th style="width:95px;">Role</th>
-                                        <th style="width:105px;">Last Login</th>
+                                        <th style="width:110px;">Status</th>
+                                        <th style="width:140px;">Last Seen</th>
                                         <th style="width:110px;">Password</th>
-                                        <th style="width:90px;">Session</th>
                                         <th>Actions</th>
                                     </tr></thead>
                                     <tbody id="devUsersBody"></tbody>

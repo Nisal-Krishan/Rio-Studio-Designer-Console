@@ -3005,6 +3005,22 @@ function renderDevUsers(users) {
     const tbody = document.getElementById("devUsersBody");
     const userCountEl = document.getElementById("devUserCount");
     if (userCountEl) userCountEl.textContent = users.length;
+    
+    // Update live stats
+    const totalEl = document.getElementById("devTotalUsersCount");
+    const onlineEl = document.getElementById("devOnlineUsersCount");
+    const offlineEl = document.getElementById("devOfflineUsersCount");
+    if (totalEl) totalEl.textContent = users.length;
+    
+    let onlineCount = 0, offlineCount = 0;
+    users.forEach(u => {
+        const presence = getUserPresenceInfo(u);
+        if (presence.status === "online") onlineCount++;
+        else offlineCount++;
+    });
+    if (onlineEl) onlineEl.textContent = onlineCount;
+    if (offlineEl) offlineEl.textContent = offlineCount;
+    
     if (!users.length) { if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No users yet. Use "Add New User" to create one.</td></tr>`; return; }
     if (!tbody) return;
     tbody.innerHTML = users.map((u) => {
@@ -3025,7 +3041,7 @@ function renderDevUsers(users) {
                 <button type="button" class="btn-action dev-force-logout-btn" data-id="${u.id}" data-name="${escAttr(u.username)}"${isLoggedIn ? "" : " disabled"} title="End remote sessions">Logout</button>
                 <button type="button" class="btn-action edit dev-pw-btn" data-id="${u.id}" data-name="${escAttr(u.username)}">Reset PW</button>
                 <button type="button" class="btn-action delete dev-del-btn" data-id="${u.id}" data-name="${escAttr(u.username)}">Remove</button></div>`;
-        return `<tr>
+        return `<tr data-user-status="${presence.status}">
             <td><div class="dev-user-avatar ${u.role || "designer"}" title="${escAttr(u.username)}">${initials}</div></td>
             <td><div class="dev-user-cell">
                 <div class="dev-user-meta">
@@ -3034,9 +3050,9 @@ function renderDevUsers(users) {
                 </div>
             </div></td>
             <td><span class="role-badge ${u.role}">${u.role}</span></td>
+            <td>${sessionStatusCell(presence)}</td>
             <td class="session-time" title="${escAttr(formatSessionTime(u.lastSeen || (activeSessionsMap[u.id]?.loginTime)))}">${presence.lastSeen}</td>
             <td>${pwCell}</td>
-            <td>${sessionStatusCell(presence)}</td>
             <td>${fullActions}</td>
         </tr>`;
     }).join("");
@@ -3219,6 +3235,7 @@ function loadUsersData() {
         }
     }
     bindDevAddNewUserBtn();
+    bindDevUserFilters();
 }
 
 let devDashLoadedOnce = false;
@@ -3487,6 +3504,36 @@ function bindDevAddNewUserBtn() {
         showToast("Fill the form in the left panel to add a new user");
     });
     addUserBtnBound = true;
+}
+
+// User status filter chips
+function bindDevUserFilters() {
+    const filterChips = document.querySelectorAll("[data-user-filter]");
+    filterChips.forEach(chip => {
+        chip.addEventListener("click", () => {
+            // Update active state
+            filterChips.forEach(c => c.classList.remove("active"));
+            chip.classList.add("active");
+            
+            const filter = chip.dataset.userFilter;
+            const tbody = document.getElementById("devUsersBody");
+            if (!tbody) return;
+            
+            const rows = tbody.querySelectorAll("tr[data-user-status]");
+            rows.forEach(row => {
+                const status = row.dataset.userStatus;
+                if (filter === "all") {
+                    row.classList.remove("hidden-row");
+                } else if (filter === "online" && status === "online") {
+                    row.classList.remove("hidden-row");
+                } else if (filter === "offline" && status !== "online") {
+                    row.classList.remove("hidden-row");
+                } else {
+                    row.classList.add("hidden-row");
+                }
+            });
+        });
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
