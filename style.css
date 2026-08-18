@@ -4902,4 +4902,88 @@ tfoot th {
     height: calc(100vh - 64px - 28px);
 }
 
+/* Dev Live Stats in left panel */
+.dev-live-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 14px 0 18px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.dev-stat-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 6px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+.dev-stat-value {
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+}
+.dev-stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+.dev-stat-mini.online .dev-stat-value { color: var(--green); }
+.dev-stat-mini.offline .dev-stat-value { color: var(--text-muted); }
+
+/* User status filter chips */
+.user-status-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.filter-chip {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #ccc;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.filter-chip:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+.filter-chip.active {
+    background: var(--purple);
+    border-color: var(--purple);
+    color: #fff;
+}
+
+/* Row highlighting based on user status */
+#devUsersBody tr[data-user-status="online"] {
+    background: rgba(16, 185, 129, 0.05);
+}
+#devUsersBody tr[data-user-status="online"]:hover {
+    background: rgba(16, 185, 129, 0.1);
+}
+#devUsersBody tr[data-user-status="offline"] {
+    background: rgba(255, 255, 255, 0.02);
+}
+#devUsersBody tr[data-user-status="offline"]:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Hide rows based on filter */
+#devUsersBody tr[data-user-status="offline"].hidden-row,
+#devUsersBody tr[data-user-status="online"].hidden-row {
+    display: none;
+}
+
 
